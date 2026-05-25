@@ -9,7 +9,7 @@ import '../styles/global.css';
 export function App() {
 
 	return (
-		<LocationProvider>
+		<LocationProvider scope="/coffee-trail">
 			<Header />
 			<main>
 				<Router>
