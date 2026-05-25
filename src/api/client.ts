@@ -6,4 +6,7 @@ const SB_URL = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
 const SB_PUBLISHABLE = import.meta.env.VITE_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 // Pass first the link to database, then the unique supabase key
-export const supabase = createClient<Database>(SB_URL, SB_PUBLISHABLE);
+export const supabase =
+  typeof window !== "undefined"
+    ? createClient<Database>(SB_URL, SB_PUBLISHABLE)
+    : (null as any);
