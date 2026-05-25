@@ -15,6 +15,7 @@ export function Header() {
 					404
 				</a>
 			</nav>
+			<br/>
 		</header>
 	);
 }

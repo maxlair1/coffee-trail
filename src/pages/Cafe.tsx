@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { type Cafe } from '../api/cafe.types';
 import { supabase } from '../api/client';
 import { NotFound } from './_404';
+import { Map } from '../components/Map';
 
 export function Cafe() {
     const [cafe, setCafe] = useState(null); // state to hold the JSON array
@@ -49,6 +50,13 @@ export function Cafe() {
         <div>Cafe ID: {id}</div>
         <br/>
         <h1>{cafe.name}</h1>
+        <br/>
+        <Map
+            name={cafe.name}
+            city={cafe.city}
+            state={cafe.state}
+            address={cafe.address}
+        />
     </>
 
     );
