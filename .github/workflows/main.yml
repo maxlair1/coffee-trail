@@ -34,8 +34,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Expose any env vars your app needs at build time
-          # VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_PUBLIC_SUPABASE_URL: ${{ secrets.VITE_PUBLIC_SUPABASE_URL }}
+          VITE_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
