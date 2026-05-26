@@ -1,9 +1,11 @@
+import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../api/client';
 import { useEffect, useState } from 'preact/hooks';
 
 export function Home() {
 	const [items, setItems] = useState([]); // state to hold the JSON array
 	const [loading, setLoading] = useState(true);
+	const {loading: authLoading, session} = useAuth();
 
 	useEffect(() => {
 		async function fetchData() {
@@ -32,6 +34,17 @@ export function Home() {
 	return (
 		<div class="home">
 			<h1>Ranked cafes</h1>
+
+			{/* Actions */}
+			<div style={{
+				display: 'flex',
+				gap: '0.5rem'
+			}}>
+
+				{!authLoading && session && <button>edit</button>}
+				<button>search</button>
+			</div>
+
 			<table>
 			<thead>
 				<tr style={{textAlign: 'left' }}>

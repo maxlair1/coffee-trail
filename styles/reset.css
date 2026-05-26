@@ -41,9 +41,11 @@ p, h1, h2, h3, h4, h5, h6 {
 /* 9. Improve line wrapping */
 p {
   text-wrap: pretty;
+  font-weight: 300;
 }
 h1, h2, h3, h4, h5, h6 {
   text-wrap: balance;
+  font-weight: 500;
 }
 
 /*

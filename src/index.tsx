@@ -2,23 +2,29 @@ import { LocationProvider, Router, Route, hydrate, prerender as ssr } from 'prea
 
 import { Header } from './components/Header.jsx';
 import { Home } from './pages/Home';
-import { NotFound } from './pages/_404';
 import { Cafe } from './pages/Cafe';
+import { Login } from './pages/Login';
+import { AuthProvider } from '../context/AuthContext.js';
 import '../styles/global.css';
+// import { AuthGuard } from './components/AuthGuard.js';
+// import { NotFound } from './pages/_404';
 
 export function App() {
 
 	return (
-		<LocationProvider>
-			<Header />
-			<main>
-				<Router>
-					<Route path="/" component={Home} />
-					<Route default component={NotFound} />
-					<Route path='/cafe/:id' component={Cafe}></Route>
-				</Router>
-			</main>
-		</LocationProvider>
+		<AuthProvider>
+			<LocationProvider>
+				<Header />
+				<main style={{margin: '0.5rem'}}>
+					<Router>
+						<Route path="/" component={Home} />
+						<Route default component={Home} />
+						<Route path='/login' component={Login}/>
+						<Route path='/cafe/:id' component={Cafe}></Route>
+					</Router>
+				</main>
+			</LocationProvider>
+		</AuthProvider>
 	);
 }
 

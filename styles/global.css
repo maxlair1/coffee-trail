@@ -1,1 +1,20 @@
 @import url('./reset.css');
+
+/* <weight>: Use a value from 100 to 900 */
+/* <uniquifier>: Use a unique and descriptive class name */
+
+:root {
+    * {
+    font-family: "Fraunces", serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    letter-spacing: -3%;
+    font-variation-settings:
+        "SOFT" 100,
+        "WONK" 0;
+    }
+}
+
+button {
+    
+}

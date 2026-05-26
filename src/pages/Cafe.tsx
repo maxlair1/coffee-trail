@@ -57,6 +57,9 @@ export function Cafe() {
             state={cafe.state}
             address={cafe.address}
         />
+        <ul>
+            {cafe.tags}
+        </ul>
     </>
 
     );
