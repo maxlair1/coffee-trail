@@ -4,8 +4,11 @@ import { Header } from './components/Header.jsx';
 import { Home } from './pages/Home';
 import { Cafe } from './pages/Cafe';
 import { Login } from './pages/Login';
+import { Tags } from './pages/Tags.js';
 import { AuthProvider } from '../context/AuthContext.js';
 import '../styles/global.css';
+import '@phosphor-icons/web/fill';
+import { AuthGuard } from './components/AuthGuard.js';
 // import { AuthGuard } from './components/AuthGuard.js';
 // import { NotFound } from './pages/_404';
 
@@ -21,6 +24,7 @@ export function App() {
 						<Route default component={Home} />
 						<Route path='/login' component={Login}/>
 						<Route path='/cafe/:id' component={Cafe}></Route>
+						<Route path='/tags' component={() => <AuthGuard><Tags/></AuthGuard>}></Route>
 					</Router>
 				</main>
 			</LocationProvider>

@@ -12,7 +12,8 @@ export function Home() {
 		try {
 			const { data, error } = await supabase
 			.from('ranked_cafes')
-			.select("*");
+			.select("*")
+			.order('rank', { ascending: true });
 
 			if (error) throw error;
 			setItems(data); // 3. Save the JSON data to state

@@ -36,12 +36,6 @@ export function Login() {
             // marginInline: 'auto'
         }}>
             <h2>Login</h2>
-            {/* {!loading && session && (
-					<>
-						<span style={{color: 'green'}}> Logged in as {session.user.email}</span>
-						<button onClick={handleLogout} style={{backgroundColor: 'red'}}>Logout</button>
-					</>
-				)} */}
             <div style={{
                 display: 'inline-flex',
                 flexDirection: 'column',
