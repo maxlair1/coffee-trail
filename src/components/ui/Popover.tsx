@@ -14,9 +14,10 @@ export function Popover({ trigger, triggerStyle, triggerClass, tooltip, variant,
 	const id = useId();
 
 	function autoClose(e: any) {
-		if (e.target.closest('button')) {
-			e.currentTarget.hidePopover();
-		}
+		const btn = e.target.closest('button');
+		if (!btn) return;
+		if (btn.hasAttribute('data-keep-open')) return;
+		e.currentTarget.hidePopover();
 	}
 
 	const triggerAttrs = { popovertarget: id } as any;

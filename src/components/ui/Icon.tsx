@@ -5,7 +5,7 @@ type Props = {
 	weight?: Weight;
 };
 
-export function Icon({ name, weight = 'fill' }: Props) {
+export function Icon({ name, weight = 'bold' }: Props) {
 	return <i class={`ph-${weight} ph-${name}`} aria-hidden="true" />;
 }
 

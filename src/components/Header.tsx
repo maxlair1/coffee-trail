@@ -1,11 +1,34 @@
 import { useLocation } from 'preact-iso';
+import { useEffect, useState } from 'preact/hooks';
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from '../api/client';
-import { useEffect } from 'preact/hooks';
+import { Icon } from './ui/Icon';
+
+type Theme = 'light' | 'dark';
 
 export function Header() {
 	const { url } = useLocation();
-	const { loading, session} = useAuth();
+	const { loading, session } = useAuth();
+	const [theme, setTheme] = useState<Theme>('light');
+
+	useEffect(() => {
+		const saved = localStorage.getItem('theme');
+		const initial: Theme =
+			saved === 'light' || saved === 'dark' ? saved
+				: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark'
+					: 'light';
+		setTheme(initial);
+		document.documentElement.style.colorScheme = initial;
+		document.documentElement.dataset.theme = initial;
+	}, []);
+
+	function toggleTheme() {
+		const next: Theme = theme === 'dark' ? 'light' : 'dark';
+		setTheme(next);
+		document.documentElement.style.colorScheme = next;
+		document.documentElement.dataset.theme = next;
+		localStorage.setItem('theme', next);
+	}
 
 	async function handleLogout() {
 		await supabase.auth.signOut();
@@ -14,11 +37,12 @@ export function Header() {
 
 	return (
 		<header style={{
-			borderBottom: 'solid 1px #292929',
+			borderBottom: '1px solid var(--border)',
 			marginBottom: '1rem',
 			display: 'flex',
 			justifyContent: 'space-between',
-			flexDirection: 'row', 
+			alignItems: 'center',
+			flexDirection: 'row',
 			gap: '0.25rem',
 			padding: '0.5rem',
 			flexWrap: 'wrap'
@@ -26,7 +50,7 @@ export function Header() {
 			<nav style={{
 				display: 'flex',
 				alignItems: 'center',
-				flexDirection: 'row', 
+				flexDirection: 'row',
 				gap: '1rem',
 				padding: '0.5rem',
 			}}>
@@ -36,24 +60,31 @@ export function Header() {
 				</a>
 				<a href="/login" class={url == '/login' && 'active'}>
 					Admin
-				</a> 
-				{/* <a href="/404" class={url == '/404' && 'active'}>
-					404
-					</a> */}
-				<br/>
+				</a>
 			</nav>
-			{!loading && session && (
-				<div style={{
-					display: 'inline-flex',
-					justifyContent: 'center',
-					alignItems: 'center',
-					padding: '0.25rem',
-					backgroundColor: '#00800020',
-				}}>
-					<span style={{color: 'green', textOverflow: 'elipses', textWrap: 'nowrap', width: '100%'}}> Logged in as {session.user.email}</span>
-					<button data-variant="ghost" onClick={handleLogout}>Logout</button>
-				</div>
-			)}
+			<div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+				<button
+					type="button"
+					data-variant="ghost"
+					onClick={toggleTheme}
+					data-tooltip={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+					aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+				>
+					<Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+				</button>
+				{!loading && session && (
+					<div style={{
+						display: 'inline-flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						padding: '0.25rem',
+						backgroundColor: '#00800020',
+					}}>
+						<span style={{color: 'green', textOverflow: 'ellipsis', textWrap: 'nowrap'}}>Logged in as {session.user.email}</span>
+						<button data-variant="ghost" onClick={handleLogout}>Logout</button>
+					</div>
+				)}
+			</div>
 		</header>
 	);
 }

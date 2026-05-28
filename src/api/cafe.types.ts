@@ -13,6 +13,8 @@ export type Cafe = {
   tags: number[] | null;
   rank: number;
   archived: boolean;
+  map_hidden?: boolean | null;
+  map_query?: string | null;
 };
 
 // For inserts — omit auto-generated fields

@@ -1,5 +1,9 @@
 @import url('./reset.css');
 
+:root {
+	--border: color-mix(in srgb, CanvasText 20%, transparent);
+}
+
 ul.plain {
 	list-style: none;
 	padding: 0;
@@ -14,6 +18,9 @@ ul.plain {
 	align-items: center;
 	gap: 0.25rem;
 	font-size: 0.85em;
+	overflow: hidden;
+	text-wrap: nowrap;
+	text-overflow: ellipsis;
 }
 
 .tag-pill button {
@@ -29,7 +36,7 @@ ul.plain {
 	background: var(--bg);
 	width: 1.5rem;
 	height: 1.5rem;
-	border: 1px solid rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--border);
 	border-radius: 4px;
 	padding: 0;
 }
@@ -46,7 +53,7 @@ ul.plain {
 	width: 1.25rem;
 	height: 1.25rem;
 	padding: 0;
-	border: 1px solid rgba(0, 0, 0, 0.2);
+	border: 1px solid var(--border);
 	border-radius: 3px;
 	cursor: pointer;
 }
@@ -94,12 +101,345 @@ button[data-variant="ghost"] {
 	cursor: pointer;
 }
 
-button[data-variant="ghost"]:hover {
-	background: rgba(128, 128, 128, 0.15);
+@media (hover: hover) {
+	button[data-variant="ghost"]:hover {
+		background: rgba(128, 128, 128, 0.15);
+	}
 }
 
 button[data-variant="ghost"]:active {
 	background: rgba(128, 128, 128, 0.25);
+}
+
+button[data-variant="ghost"][data-active],
+button[data-variant="ghost"].is-active {
+	background: rgba(41, 96, 209, 0.18);
+	color: #2960D1;
+}
+
+@media (hover: hover) {
+	button[data-variant="ghost"][data-active]:hover,
+	button[data-variant="ghost"].is-active:hover {
+		background: rgba(41, 96, 209, 0.28);
+	}
+}
+
+button[data-variant="danger"] {
+	background: transparent;
+	border: 1px solid transparent;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	color: #d33;
+	font: inherit;
+	cursor: pointer;
+}
+
+@media (hover: hover) {
+	button[data-variant="danger"]:hover {
+		background: rgba(221, 51, 51, 0.12);
+	}
+}
+
+button[data-variant="danger"]:active {
+	background: rgba(221, 51, 51, 0.22);
+}
+
+.filters {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.75rem;
+}
+
+.search-input {
+	flex: 1;
+	min-width: 12rem;
+}
+
+.row-tags {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 0.25rem;
+	overflow-x: auto;
+	max-width: 16rem;
+	scrollbar-width: thin;
+}
+
+.row-tags .tag-pill {
+	flex-shrink: 0;
+}
+
+.thumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin: 0 0 1rem;
+}
+
+.thumb-wrap {
+	position: relative;
+}
+
+.thumb {
+	height: 4.5rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	display: block;
+}
+
+.thumb img {
+	height: 100%;
+	width: auto;
+	display: block;
+}
+
+.thumb-remove {
+	position: absolute;
+	top: 0.25rem;
+	right: 0.25rem;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border-radius: 50%;
+	border: 1px solid var(--border);
+	background: color-mix(in srgb, Canvas 80%, transparent);
+	color: CanvasText;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.7rem;
+	line-height: 1;
+}
+
+.thumb-add {
+	height: 4.5rem;
+	min-width: 4.5rem;
+	border: 1px dashed var(--border);
+	background: transparent;
+	color: CanvasText;
+	cursor: pointer;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.15rem;
+	font: inherit;
+	font-size: 0.75rem;
+	padding: 0 0.5rem;
+}
+
+.map-frame {
+	position: relative;
+	width: 100%;
+	height: 400px;
+	margin-bottom: 1rem;
+}
+
+.map-frame iframe {
+	width: 100%;
+	height: 100%;
+	display: block;
+	border: 0;
+	transition: opacity 0.2s ease;
+}
+
+.map-skeleton {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		color-mix(in srgb, CanvasText 5%, transparent) 0%,
+		color-mix(in srgb, CanvasText 14%, transparent) 50%,
+		color-mix(in srgb, CanvasText 5%, transparent) 100%
+	);
+	background-size: 200% 100%;
+	animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
+[data-theme="dark"] .map-frame iframe {
+	filter: invert(0.92) hue-rotate(180deg) saturate(1.15);
+}
+
+.lightbox {
+	border: none;
+	padding: 0;
+	background: rgba(0, 0, 0, 0.92);
+	color: white;
+	width: 100vw;
+	height: 100vh;
+	max-width: none;
+	max-height: none;
+}
+
+.lightbox::backdrop {
+	background: rgba(0, 0, 0, 0.92);
+}
+
+.lightbox-content {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.lightbox-content img {
+	max-width: 92vw;
+	max-height: 92vh;
+	object-fit: contain;
+	display: block;
+}
+
+.lightbox-content iframe {
+	width: min(92vw, 64rem);
+	height: 80vh;
+	border: 0;
+}
+
+.lightbox-nav,
+.lightbox-close {
+	position: absolute;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.12);
+	color: white;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+.lightbox-nav {
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.lightbox-prev { left: 1rem; }
+.lightbox-next { right: 1rem; }
+
+.lightbox-close {
+	top: 1rem;
+	right: 1rem;
+	width: 2.5rem;
+	height: 2.5rem;
+}
+
+.lightbox-nav:disabled {
+	opacity: 0.3;
+	cursor: default;
+}
+
+.toaster {
+	position: fixed;
+	bottom: 1rem;
+	right: 1rem;
+	z-index: 1000;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	width: min(90vw, 24rem);
+	pointer-events: none;
+}
+
+.toast {
+	pointer-events: auto;
+	padding: 0.6rem 0.9rem;
+	background: Canvas;
+	border: 1px solid var(--border);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+	color: CanvasText;
+	font: inherit;
+	font-size: 0.9rem;
+	cursor: pointer;
+	text-align: left;
+	animation: toast-in 0.18s ease-out;
+}
+
+.toast[data-kind="success"] {
+	border-color: #29A02A;
+	color: #29A02A;
+}
+
+.toast[data-kind="error"] {
+	border-color: #d33;
+	color: #d33;
+}
+
+@keyframes toast-in {
+	from { transform: translateX(16px); opacity: 0; }
+	to { transform: translateX(0); opacity: 1; }
+}
+
+@media (max-width: 600px) {
+	.toaster {
+		left: 1rem;
+		right: 1rem;
+		width: auto;
+	}
+}
+
+.tag-picker {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 14rem;
+}
+
+.tag-picker-search {
+	width: 100%;
+}
+
+.tag-picker-list {
+	max-height: 16rem;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	margin: 0;
+}
+
+.tag-picker-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	background: none;
+	border: none;
+	padding: 0.35rem 0.5rem;
+	border-radius: 4px;
+	cursor: pointer;
+	text-align: left;
+	color: inherit;
+	font: inherit;
+}
+
+.tag-picker-row[data-active] {
+	background: rgba(128, 128, 128, 0.12);
+}
+
+.tag-picker-check {
+	width: 1rem;
+	display: inline-flex;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+@media (hover: hover) {
+	.tag-picker-row:hover {
+		background: rgba(128, 128, 128, 0.18);
+	}
 }
 
 [data-tooltip] {
@@ -125,11 +465,18 @@ button[data-variant="ghost"]:active {
 	transition: opacity 0.1s ease, transform 0.1s ease;
 }
 
-[data-tooltip]:hover::after,
 [data-tooltip]:focus-visible::after {
 	opacity: 1;
 	transform: translateX(-50%) translateY(0);
 	transition-delay: 0.4s;
+}
+
+@media (hover: hover) {
+	[data-tooltip]:hover::after {
+		opacity: 1;
+		transform: translateX(-50%) translateY(0);
+		transition-delay: 0.4s;
+	}
 }
 
 .popover {
@@ -137,11 +484,11 @@ button[data-variant="ghost"]:active {
 	position-area: bottom span-right;
 	margin: 0.25rem 0 0;
 	padding: 0.5rem;
-	border: 1px solid rgba(128, 128, 128, 0.2);
-	border-radius: 8px;
+	border: 1px solid var(--border);
 	background: Canvas;
 	color: CanvasText;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
 
 	flex-direction: column;
 	gap: 0.25rem;
@@ -168,6 +515,48 @@ button[data-variant="ghost"]:active {
 	}
 }
 
+@media (max-width: 600px) {
+	.popover {
+		position: fixed;
+		position-area: none;
+		position-anchor: none;
+		inset: auto 0 0 0;
+		margin: 0;
+		max-width: none;
+		width: 100%;
+		border-radius: 12px 12px 0 0;
+		padding: 1rem;
+		padding-bottom: max(1rem, env(safe-area-inset-bottom));
+		transform: translateY(100%);
+	}
+
+	.popover:popover-open {
+		transform: translateY(0);
+	}
+
+	.popover::backdrop {
+		background: rgba(0, 0, 0, 0.4);
+		opacity: 0;
+		transition:
+			opacity 0.2s ease,
+			display 0.2s ease allow-discrete,
+			overlay 0.2s ease allow-discrete;
+	}
+
+	.popover:popover-open::backdrop {
+		opacity: 1;
+	}
+
+	@starting-style {
+		.popover:popover-open {
+			transform: translateY(100%);
+		}
+		.popover:popover-open::backdrop {
+			opacity: 0;
+		}
+	}
+}
+
 
 /* <weight>: Use a value from 100 to 900 */
 /* <uniquifier>: Use a unique and descriptive class name */
@@ -185,7 +574,7 @@ button[data-variant="ghost"]:active {
 }
 
 hr {
-    border-color: rgba(140, 140, 140, 0.5);
+    border-color: var(--border);
 }
 
 /* table, th, td {

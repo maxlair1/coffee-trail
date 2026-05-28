@@ -1,19 +1,38 @@
 import { useRoute } from 'preact-iso';
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { type Cafe as CafeT } from '../api/cafe.types';
-import { type Tag } from '../api/tag.types';
+import { type Tag as TagT } from '../api/tag.types';
 import { supabase } from '../api/client';
 import { Map as CafeMap } from '../components/Map';
+import { Tag } from '../components/ui/Tag';
+import { Popover } from '../components/ui/Popover';
+import { Icon } from '../components/ui/Icon';
+import { TagMultiSelect } from '../components/ui/TagMultiSelect';
+import { Gallery } from '../components/ui/Gallery';
 import { formatDate } from '../utils/date';
-import { LOADING } from '../constants';
+import { LOADING, US_STATES } from '../constants';
+import { toast } from '../utils/toast';
+import { uploadCafeImage } from '../utils/upload';
+import { useAuth } from '../../context/AuthContext';
 
-const FIELDS: { label: string; value: (c: CafeT, tags: Map<number, Tag>) => any }[] = [
+const FIELDS: { label: string; value: (c: CafeT, tags: Map<number, TagT>) => any }[] = [
 	{ label: 'Rank', value: c => c.rank },
 	{ label: 'Visited', value: c => c.date_visited && formatDate(c.date_visited) },
 	{ label: 'City', value: c => c.city },
 	{ label: 'State', value: c => c.state },
 	{ label: 'Address', value: c => c.address },
-	{ label: 'Tags', value: (c, tags) => c.tags?.map(id => tags.get(id)?.name).filter(Boolean).join(', ') },
+	{
+		label: 'Tags',
+		value: (c, tags) => {
+			const ts = (c.tags ?? []).map(id => tags.get(id)).filter(Boolean) as TagT[];
+			if (ts.length === 0) return null;
+			return (
+				<span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+					{ts.map(t => <Tag key={t.id} name={t.name} color={t.color} icon={t.icon} />)}
+				</span>
+			);
+		},
+	},
 	{ label: 'Notes', value: c => c.body },
 	{ label: 'Added', value: c => formatDate(c.created_at) },
 	{ label: 'Archived', value: c => c.archived ? 'Yes' : null },
@@ -21,8 +40,14 @@ const FIELDS: { label: string; value: (c: CafeT, tags: Map<number, Tag>) => any 
 
 export function Cafe() {
 	const [cafe, setCafe] = useState<CafeT | null>(null);
-	const [tags, setTags] = useState<Tag[]>([]);
+	const [tags, setTags] = useState<TagT[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [editing, setEditing] = useState(false);
+	const [draft, setDraft] = useState<CafeT | null>(null);
+	const [saving, setSaving] = useState(false);
+	const [uploading, setUploading] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const { loading: authLoading, session } = useAuth();
 
 	const { params } = useRoute();
 	const id = params.id ?? '';
@@ -43,34 +68,289 @@ export function Cafe() {
 	}, [id]);
 
 	const tagById = useMemo(() => new Map(tags.map(t => [t.id, t])), [tags]);
+	const selectedTagSet = useMemo(() => new Set(draft?.tags ?? []), [draft]);
+
+	function startEdit() {
+		if (!cafe) return;
+		setDraft({ ...cafe });
+		setEditing(true);
+	}
+
+	function cancel() {
+		setDraft(null);
+		setEditing(false);
+	}
+
+	function patch(p: Partial<CafeT>) {
+		setDraft(d => d ? { ...d, ...p } : d);
+	}
+
+	function toggleTag(tagId: number) {
+		if (!draft) return;
+		const current = draft.tags ?? [];
+		const next = current.includes(tagId)
+			? current.filter(t => t !== tagId)
+			: [...current, tagId];
+		patch({ tags: next });
+	}
+
+	function removeImage(idx: number) {
+		setDraft(d => {
+			if (!d) return d;
+			const images = (d.images ?? []).filter((_, i) => i !== idx);
+			return { ...d, images: images.length ? images : null };
+		});
+	}
+
+	async function handleFiles(e: Event) {
+		const target = e.target as HTMLInputElement;
+		const files = Array.from(target.files ?? []);
+		target.value = '';
+		if (!files.length || !draft) return;
+		setUploading(true);
+		for (const file of files) {
+			try {
+				const url = await uploadCafeImage(file, draft.id);
+				setDraft(d => d ? { ...d, images: [...(d.images ?? []), url] } : d);
+				toast.success(`Uploaded ${file.name}`);
+			} catch (err: any) {
+				toast.error(`Upload failed: ${err.message}`);
+			}
+		}
+		setUploading(false);
+	}
+
+	async function save() {
+		if (!draft) return;
+		setSaving(true);
+		const payload: Record<string, any> = {
+			name: draft.name,
+			body: draft.body,
+			date_visited: draft.date_visited,
+			city: draft.city,
+			state: draft.state,
+			address: draft.address,
+			tags: draft.tags,
+			archived: draft.archived,
+			images: draft.images,
+		};
+		// Only send map_* fields if the DB row already exposes them (column exists)
+		if (cafe && 'map_hidden' in cafe) payload.map_hidden = draft.map_hidden ?? false;
+		if (cafe && 'map_query' in cafe) payload.map_query = draft.map_query ?? null;
+
+		const { data, error } = await supabase
+			.from('ranked_cafes')
+			.update(payload)
+			.eq('id', draft.id)
+			.select();
+		setSaving(false);
+		if (error) {
+			console.error(error);
+			toast.error(`Save failed: ${error.message}`);
+			return;
+		}
+		if (!data || data.length === 0) {
+			toast.error('Save returned 0 rows — check RLS policy or table type.');
+			return;
+		}
+		setCafe(data[0] as CafeT);
+		setEditing(false);
+		setDraft(null);
+		toast.success('Saved');
+	}
 
 	if (loading) return <p>{LOADING}</p>;
 	if (!cafe) return <p>Not found</p>;
 
+	const canEdit = !authLoading && !!session;
+	const source = editing && draft ? draft : cafe;
+	const showMap = !source.map_hidden;
+	const galleryImages = (editing ? draft?.images : cafe.images) ?? [];
+
 	return (
-		<section style={{
-            marginInline: 'auto',
-            maxWidth: '70ch'
-        }}>
-            <a href="../">
-                <button>← Back</button>
-            </a>
-			<h1><em style={{
-                color: 'orange',
-                fontWeight: 'bold'
-            }}>#{cafe.rank}</em>&nbsp;&nbsp;{cafe.name}</h1>
+		<section style={{ marginInline: 'auto', maxWidth: '70ch' }}>
+			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+				<a href="../"><button>← Back</button></a>
+				{canEdit && !editing && (
+					<button
+						data-variant="ghost"
+						onClick={startEdit}
+						data-tooltip="Edit"
+						aria-label="Edit"
+					>
+						<Icon name="pencil-simple" /> Edit
+					</button>
+				)}
+				{editing && (
+					<span style={{ display: 'inline-flex', gap: '0.5rem' }}>
+						<button onClick={cancel} disabled={saving}>Cancel</button>
+						<button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+					</span>
+				)}
+			</div>
 
-			<CafeMap name={cafe.name} city={cafe.city} state={cafe.state} address={cafe.address} />
+			<h1>
+				<em style={{ color: 'orange', fontWeight: 'bold' }}>#{cafe.rank}</em>&nbsp;&nbsp;
+				{editing && draft ? (
+					<input
+						value={draft.name}
+						onInput={e => patch({ name: e.currentTarget.value })}
+						style={{ font: 'inherit', width: '60%' }}
+					/>
+				) : (
+					cafe.name
+				)}
+			</h1>
 
-			<table>
-				<tbody>
-					{FIELDS.map(f => {
-						const v = f.value(cafe, tagById);
-						if (!v) return null;
-						return <tr><th>{f.label}</th><td>{v}</td></tr>;
-					})}
-				</tbody>
-			</table>
+			{showMap && (
+				<CafeMap
+					name={source.name}
+					city={source.city}
+					state={source.state}
+					address={source.address}
+					queryOverride={source.map_query}
+				/>
+			)}
+
+			{editing && draft ? (
+				<>
+					<Gallery
+						images={galleryImages}
+						alt={cafe.name}
+						onRemove={removeImage}
+						trailing={
+							<button
+								type="button"
+								class="thumb-add"
+								onClick={() => fileInputRef.current?.click()}
+								disabled={uploading}
+							>
+								<Icon name="plus" />
+								<small>{uploading ? 'Uploading…' : 'Add'}</small>
+							</button>
+						}
+					/>
+					<input
+						ref={fileInputRef}
+						type="file"
+						accept="image/*"
+						multiple
+						onChange={handleFiles}
+						style={{ display: 'none' }}
+					/>
+				</>
+			) : (
+				galleryImages.length > 0 && <Gallery images={galleryImages} alt={cafe.name} />
+			)}
+
+			{editing && draft ? (
+				<table>
+					<tbody>
+						<tr><th>Visited</th><td>
+							<input
+								type="date"
+								value={draft.date_visited ?? ''}
+								onInput={e => patch({ date_visited: e.currentTarget.value || null })}
+							/>
+						</td></tr>
+						<tr><th>City</th><td>
+							<input
+								value={draft.city ?? ''}
+								onInput={e => patch({ city: e.currentTarget.value || null })}
+							/>
+						</td></tr>
+						<tr><th>State</th><td>
+							<select
+								value={draft.state ?? ''}
+								onChange={e => patch({ state: e.currentTarget.value || null })}
+							>
+								<option value="">—</option>
+								{US_STATES.map(s => (
+									<option key={s.code} value={s.code}>{s.name}</option>
+								))}
+							</select>
+						</td></tr>
+						<tr><th>Address</th><td>
+							<input
+								value={draft.address ?? ''}
+								onInput={e => patch({ address: e.currentTarget.value || null })}
+								style={{ width: '100%' }}
+							/>
+						</td></tr>
+						<tr><th>Map</th><td>
+							<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}>
+								<input
+									type="checkbox"
+									checked={!draft.map_hidden}
+									onChange={e => patch({ map_hidden: !e.currentTarget.checked })}
+								/>
+								Show map
+							</label>
+							<input
+								value={draft.map_query ?? ''}
+								onInput={e => patch({ map_query: e.currentTarget.value || null })}
+								placeholder="Search override (leave blank for auto)"
+								style={{ width: '100%', display: 'block' }}
+							/>
+						</td></tr>
+						<tr><th>Tags</th><td>
+							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+								{(draft.tags ?? []).map(tid => {
+									const t = tagById.get(tid);
+									return t ? (
+										<Tag
+											key={tid}
+											name={t.name}
+											color={t.color}
+											icon={t.icon}
+											onClear={() => toggleTag(tid)}
+										/>
+									) : null;
+								})}
+								<Popover
+									trigger={<Icon name="plus" />}
+									tooltip="Add tag"
+									variant="ghost"
+								>
+									<TagMultiSelect
+										tags={tags}
+										selected={selectedTagSet}
+										onToggle={toggleTag}
+									/>
+								</Popover>
+							</div>
+						</td></tr>
+						<tr><th>Notes</th><td>
+							<textarea
+								rows={6}
+								style={{ width: '100%', font: 'inherit' }}
+								value={draft.body}
+								onInput={e => patch({ body: e.currentTarget.value })}
+							/>
+						</td></tr>
+						<tr><th>Archived</th><td>
+							<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+								<input
+									type="checkbox"
+									checked={draft.archived}
+									onChange={e => patch({ archived: e.currentTarget.checked })}
+								/>
+								{draft.archived ? 'Yes' : 'No'}
+							</label>
+						</td></tr>
+					</tbody>
+				</table>
+			) : (
+				<table>
+					<tbody>
+						{FIELDS.map(f => {
+							const v = f.value(cafe, tagById);
+							if (!v) return null;
+							return <tr><th>{f.label}</th><td>{v}</td></tr>;
+						})}
+					</tbody>
+				</table>
+			)}
 		</section>
 	);
 }

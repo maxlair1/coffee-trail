@@ -1,13 +1,14 @@
 import { LocationProvider, Router, Route, hydrate, prerender as ssr } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
+import { Toaster } from './components/ui/Toaster';
 import { Home } from './pages/Home';
 import { Cafe } from './pages/Cafe';
 import { Login } from './pages/Login';
 import { Tags } from './pages/Tags.js';
 import { AuthProvider } from '../context/AuthContext.js';
 import '../styles/global.css';
-import '@phosphor-icons/web/fill';
+import '@phosphor-icons/web/bold';
 import { AuthGuard } from './components/AuthGuard.js';
 // import { AuthGuard } from './components/AuthGuard.js';
 // import { NotFound } from './pages/_404';
@@ -27,6 +28,7 @@ export function App() {
 						<Route path='/tags' component={() => <AuthGuard><Tags/></AuthGuard>}></Route>
 					</Router>
 				</main>
+				<Toaster />
 			</LocationProvider>
 		</AuthProvider>
 	);
