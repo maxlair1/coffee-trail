@@ -58,8 +58,8 @@ export function Header() {
 				<a href="/" class={url == '/' && 'active'}>
 					Home
 				</a>
-				<a href="/login" class={url == '/login' && 'active'}>
-					Admin
+				<a href="#" class={url == '/blog' && 'active'}>
+					Blog
 				</a>
 			</nav>
 			<div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>

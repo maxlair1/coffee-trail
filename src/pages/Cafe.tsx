@@ -13,6 +13,7 @@ import { formatDate } from '../utils/date';
 import { LOADING, US_STATES } from '../constants';
 import { toast } from '../utils/toast';
 import { uploadCafeImage } from '../utils/upload';
+import { compressRanks } from '../utils/rank';
 import { useAuth } from '../../context/AuthContext';
 
 const FIELDS: { label: string; value: (c: CafeT, tags: Map<number, TagT>) => any }[] = [
@@ -41,6 +42,7 @@ const FIELDS: { label: string; value: (c: CafeT, tags: Map<number, TagT>) => any
 export function Cafe() {
 	const [cafe, setCafe] = useState<CafeT | null>(null);
 	const [tags, setTags] = useState<TagT[]>([]);
+	const [rankList, setRankList] = useState<{ id: number; rank: number; archived: boolean; name: string }[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [editing, setEditing] = useState(false);
 	const [draft, setDraft] = useState<CafeT | null>(null);
@@ -54,14 +56,17 @@ export function Cafe() {
 
 	useEffect(() => {
 		async function fetchData() {
-			const [cafeRes, tagsRes] = await Promise.all([
+			const [cafeRes, tagsRes, rankRes] = await Promise.all([
 				supabase.from('ranked_cafes').select('*').eq('id', Number(id)).single(),
 				supabase.from('tags').select('*'),
+				supabase.from('ranked_cafes').select('id, rank, archived, name').order('rank'),
 			]);
 			if (cafeRes.error) console.error(cafeRes.error);
 			if (tagsRes.error) console.error(tagsRes.error);
+			if (rankRes.error) console.error(rankRes.error);
 			setCafe(cafeRes.data);
 			setTags(tagsRes.data ?? []);
+			setRankList(rankRes.data ?? []);
 			setLoading(false);
 		}
 		fetchData();
@@ -70,6 +75,53 @@ export function Cafe() {
 	const tagById = useMemo(() => new Map(tags.map(t => [t.id, t])), [tags]);
 	const selectedTagSet = useMemo(() => new Set(draft?.tags ?? []), [draft]);
 
+	const rankInfo = useMemo(() => {
+		if (!cafe) return null;
+		const nonArchived = rankList.filter(c => !c.archived);
+		const total = nonArchived.length;
+		let displayed = cafe.rank;
+		if (!cafe.archived) {
+			displayed = compressRanks(nonArchived).find(c => c.id === cafe.id)?.rank ?? cafe.rank;
+		}
+		// "raw" = position among ALL cafes (archived included), 1-indexed by rank ascending.
+		const rawSorted = [...rankList].sort((a, b) => a.rank - b.rank);
+		const raw = rawSorted.findIndex(c => c.id === cafe.id) + 1 || cafe.rank;
+		return { displayed, total, raw };
+	}, [cafe, rankList]);
+
+	// Immediate neighbors in the non-archived ranked sequence.
+	const neighbors = useMemo(() => {
+		if (!cafe) return { prev: null, next: null };
+		const seq = rankList.filter(c => !c.archived).sort((a, b) => a.rank - b.rank);
+		const idx = seq.findIndex(c => c.id === cafe.id);
+		if (idx === -1) return { prev: null, next: null };
+		return {
+			prev: idx > 0 ? { ...seq[idx - 1], displayed: idx } : null,
+			next: idx < seq.length - 1 ? { ...seq[idx + 1], displayed: idx + 2 } : null,
+		};
+	}, [cafe, rankList]);
+
+	// Dirty: any unsaved edit when in edit mode.
+	const dirty = useMemo(() => {
+		if (!editing || !draft || !cafe) return false;
+		const keys: (keyof CafeT)[] = [
+			'name', 'body', 'date_visited', 'city', 'state', 'address',
+			'archived', 'images', 'tags', 'map_hidden', 'map_query',
+		];
+		return keys.some(k => JSON.stringify(draft[k]) !== JSON.stringify(cafe[k]));
+	}, [editing, draft, cafe]);
+
+	// Browser-level guard for full page reload / external nav.
+	useEffect(() => {
+		if (!dirty) return;
+		const handler = (e: BeforeUnloadEvent) => {
+			e.preventDefault();
+			e.returnValue = '';
+		};
+		window.addEventListener('beforeunload', handler);
+		return () => window.removeEventListener('beforeunload', handler);
+	}, [dirty]);
+
 	function startEdit() {
 		if (!cafe) return;
 		setDraft({ ...cafe });
@@ -77,6 +129,7 @@ export function Cafe() {
 	}
 
 	function cancel() {
+		if (dirty && !confirm('Discard unsaved changes?')) return;
 		setDraft(null);
 		setEditing(false);
 	}
@@ -168,29 +221,52 @@ export function Cafe() {
 	const galleryImages = (editing ? draft?.images : cafe.images) ?? [];
 
 	return (
+		<>
 		<section style={{ marginInline: 'auto', maxWidth: '70ch' }}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
 				<a href="../"><button>← Back</button></a>
 				{canEdit && !editing && (
-					<button
-						data-variant="ghost"
-						onClick={startEdit}
-						data-tooltip="Edit"
-						aria-label="Edit"
-					>
-						<Icon name="pencil-simple" /> Edit
-					</button>
+					<span style={{ display: 'inline-flex', gap: '0.5rem' }}>
+						<a href={`/?reorder=${cafe.id}`}>
+							<button
+								type="button"
+								data-variant="ghost"
+								data-tooltip="Change rank order"
+								aria-label="Reorder rank"
+							>
+								<Icon name="arrows-down-up" /> Reorder
+							</button>
+						</a>
+						<button
+							type="button"
+							data-variant="ghost"
+							onClick={startEdit}
+							data-tooltip="Edit"
+							aria-label="Edit"
+						>
+							<Icon name="pencil-simple" /> Edit
+						</button>
+					</span>
 				)}
 				{editing && (
 					<span style={{ display: 'inline-flex', gap: '0.5rem' }}>
 						<button onClick={cancel} disabled={saving}>Cancel</button>
-						<button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
+						<button onClick={save} disabled={saving || !dirty}>
+							{saving ? 'Saving…' : `Save${dirty ? ' *' : ''}`}
+						</button>
 					</span>
 				)}
 			</div>
 
 			<h1>
-				<em style={{ color: 'orange', fontWeight: 'bold' }}>#{cafe.rank}</em>&nbsp;&nbsp;
+				<em style={{ color: 'orange', fontWeight: 'bold' }}>
+					#{rankInfo?.displayed ?? cafe.rank}
+					{rankInfo && <small style={{ color: 'inherit', opacity: 0.7, fontWeight: 'normal' }}>{' / '}{rankInfo.total}</small>}
+				</em>
+				{rankInfo && rankInfo.raw !== rankInfo.displayed && (
+					<small style={{ marginLeft: '0.5rem', opacity: 0.6 }}>raw #{rankInfo.raw}</small>
+				)}
+				&nbsp;&nbsp;
 				{editing && draft ? (
 					<input
 						value={draft.name}
@@ -344,13 +420,51 @@ export function Cafe() {
 				<table>
 					<tbody>
 						{FIELDS.map(f => {
-							const v = f.value(cafe, tagById);
+							const cafeForDisplay = rankInfo
+								? { ...cafe, rank: rankInfo.displayed }
+								: cafe;
+							const v = f.value(cafeForDisplay, tagById);
 							if (!v) return null;
 							return <tr><th>{f.label}</th><td>{v}</td></tr>;
 						})}
 					</tbody>
 				</table>
 			)}
+
+			{(neighbors.prev || neighbors.next) && (
+				<p style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+					{neighbors.prev ? (
+						<a href={`/cafe/${neighbors.prev.id}`}>
+							<small>← #{neighbors.prev.displayed} {neighbors.prev.name}</small>
+						</a>
+					) : <span />}
+					{neighbors.next ? (
+						<a href={`/cafe/${neighbors.next.id}`}>
+							<small>#{neighbors.next.displayed} {neighbors.next.name} →</small>
+						</a>
+					) : <span />}
+				</p>
+			)}
+
+			{(neighbors.prev || neighbors.next) && (
+				<div style={{ height: '3.5rem' }} aria-hidden="true" />
+			)}
 		</section>
+
+		{(neighbors.prev || neighbors.next) && (
+			<nav class="bottom-bar" aria-label="Cafe navigation" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+				{neighbors.prev ? (
+					<a href={`/cafe/${neighbors.prev.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+						<Icon name="caret-left" /> #{neighbors.prev.displayed}
+					</a>
+				) : <span />}
+				{neighbors.next ? (
+					<a href={`/cafe/${neighbors.next.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+						#{neighbors.next.displayed} <Icon name="caret-right" />
+					</a>
+				) : <span />}
+			</nav>
+		)}
+		</>
 	);
 }

@@ -10,19 +10,32 @@ Conventions to follow when adding UI. Keep this file short — it's a reference,
 
 ## Color tokens
 
-Used as literals (no CSS variables yet — fine while the palette is this small):
+CSS variables in `:root`. All derive from `Canvas` / `CanvasText` system colors so themes adapt automatically.
+
+```css
+--surface-0: Canvas;                                              /* base */
+--surface-1: color-mix(in srgb, CanvasText 4%, Canvas);           /* popovers, toasts */
+--surface-2: color-mix(in srgb, CanvasText 8%, Canvas);           /* hovered/elevated */
+
+--border:      color-mix(in srgb, CanvasText 20%, transparent);   /* default */
+--border-soft: color-mix(in srgb, CanvasText 10%, transparent);   /* popovers, layered surfaces */
+
+--accent: #2960D1;   /* interactive accent — toggled state, links */
+--danger: #d33;      /* destructive action text */
+```
+
+**Surface ramp**: layered surfaces step toward `CanvasText` so they read as elevated against `--surface-0`. In light mode each step is slightly darker; in dark mode each step is slightly lighter — same code, automatic flip.
+
+**Other rules:**
 
 | Token | Value | Where |
 |---|---|---|
-| Interactive accent | `#2960D1` (from `COLOR_PRESETS`) | Toggled/active state on ghost buttons |
-| Emphasis accent | `orange` | Rank number on cafe page |
-| Danger | `#d33` | Destructive action text |
+| Emphasis accent | `orange` | Rank number on cafe page (kept literal — it's brand, not interactive) |
 | Muted text | `opacity: 0.6` on `<small>` | Secondary metadata |
-| Hover wash | `rgba(128, 128, 128, 0.15)` | Ghost button hover |
+| Hover wash | `rgba(128, 128, 128, 0.15)` | Ghost button hover (theme-neutral gray) |
 | Pressed wash | `rgba(128, 128, 128, 0.25)` | Ghost button `:active` |
-| Border (soft) | `var(--border)` → `color-mix(in srgb, CanvasText 20%, transparent)` | All borders (popover, hr, swatches, header) |
 
-`Canvas` / `CanvasText` system colors are used for popover backgrounds so they respect the user's color scheme.
+For tinted backgrounds derived from `--accent` / `--danger`, use `color-mix(in srgb, var(--accent) N%, transparent)` — adapts if the brand color ever changes.
 
 ## Buttons
 
@@ -35,10 +48,12 @@ Two variants, both opt-in via `data-variant`:
 
 | State | Background | Text | When |
 |---|---|---|---|
-| Idle | transparent | inherit | default |
-| Hover | gray wash 0.15 | inherit | `:hover` (only on `hover: hover` devices) |
-| Pressed | gray wash 0.25 | inherit | `:active` |
+| Idle | transparent | `color-mix(CanvasText 65%, Canvas)` | default |
+| Hover | gray wash 0.15 | `color-mix(CanvasText 90%, Canvas)` | `:hover` (only on `hover: hover` devices) |
+| Pressed | gray wash 0.25 | (inherits from hover) | `:active` |
 | Toggled | blue wash 0.18 | `#2960D1` | `[data-active]` or `.is-active` |
+
+**Foreground rule:** ghost buttons render at ~65% intensity by default so they read as "interactive non-primary" rather than body text. Brighten to ~90% on hover. Toggled state owns the blue accent. Icons inherit `currentColor`, so this affects icon-only ghost buttons too.
 
 The toggled state is **colored**, not just shaded, so it can't be mistaken for hover. For toggle buttons, set `data-active` and `aria-pressed`. The `.is-active` class is used when the trigger lives inside a wrapper component (e.g. `Popover`'s trigger).
 
@@ -98,12 +113,54 @@ The map query is auto-derived from name/city/state/address. Pass `queryOverride`
 
 `uploadCafeImage(file, cafeId)` from `src/utils/upload.ts` — downsamples to max 1600px on the long edge as JPEG (q=0.85) via canvas, then uploads to the `cafe-images` Supabase Storage bucket and returns the public URL. The bucket must exist and be public-readable; RLS must allow `insert` for authenticated users on `storage.objects` where bucket is `cafe-images`.
 
+## Edit modes & dirty-state guards
+
+Pages with a destructive-if-lost editing flow follow this pattern:
+
+- **Sticky banner at the top** when in edit mode — `.edit-banner` class, accent border, status text + Cancel + Save buttons. Make the mode unmissable.
+- **Cancel button** checks `dirty` and calls `window.confirm("Discard changes?")` before exiting. Native dialog, accessible, zero JS.
+- **`beforeunload` listener** wired in a `useEffect(() => { ... }, [dirty])` for full-page reload / external nav. Browser handles the rest. SPA route changes via clicked links aren't intercepted (preact-iso has no built-in router guard) — accept that gap, the banner stays visible to remind the user.
+- **Save disabled when not dirty.** Show count of changes in the Save label when meaningful (`Save (3)`).
+
+## Reorder / list-edit pattern
+
+For reorderable lists ([ReorderList.tsx](src/components/ReorderList.tsx)):
+
+- **Per-row controls: up arrow, pick-up handle, down arrow.** Arrows shift by one; pick-up enters "held" mode where the user clicks a slot between any two rows to drop the item. Works on touch, keyboard, and mouse without any drag-and-drop library or HTML5 `draggable=` attribute.
+- **Pick-up mode**: disables other rows' arrows + pick-up buttons (`disabled` attribute), renders thin clickable "slot" rows between every pair of items. Slots adjacent to the picked-up row are hidden (would be no-ops).
+- **"Was #N" badge** appears on rows whose position changed, so the user can audit their pending edits at a glance.
+- HTML5 drag-and-drop is intentionally not used — the native API has poor touch support and requires significant JS to style cleanly. Arrows + pick-up cover every interaction with less code.
+
+## Motion
+
+One easing curve: **`var(--ease-out)`** = `cubic-bezier(0.22, 1, 0.36, 1)`. Snappy entrance, gentle settle. Use it for any UI transition (popovers, toasts, fade-ins).
+
+Durations: keep them short. Popovers, hover state changes: **100–120ms**. Anything longer than 200ms feels sluggish for menu-level UI.
+
+Transforms should be subtle (`translateY(-2px)`, `scale(1.05)`) — large moves draw the eye away from the actual change.
+
 ## Rounded corners
 
 Default to **sharp edges**. Only buttons and form fields (`<input>`, `<select>`, `<textarea>`) get rounded corners (≤4px). Tag pills (`.tag-pill`) keep their 999px radius because pill shape is part of their identity. Tiny "control" elements (color swatches, the thumb remove × button) can keep small rounding since they're button-like.
 
 Containers (popovers, toasts, cards, thumbnails, dialogs, etc.) are sharp.
 
+## Interactive rows & row actions
+
+For data tables whose rows are clickable/actionable:
+
+- **Hover wash** — `tr:hover` gets `color-mix(in srgb, CanvasText 8%, transparent)` background, gated to `@media (hover: hover)` so it doesn't stick on touch. Sits on top of the 4% zebra so hovered rows read as slightly brighter regardless of which zebra band they're in.
+- **Per-row actions** — add a dedicated column at the right end of the row. Put a standard `<button data-variant="ghost">` (or a `<Popover>` with `variant="ghost"`) inside. Always visible, no floating/absolute positioning, no hover gating — touch users get the same affordance as desktop users.
+
+Don't reach for floating buttons / `backdrop-filter` / glassmorphism. A regular column is simpler and more native.
+
 ## Tables
 
-Default browser table styling. The home table doesn't use `table-layout: fixed`; column widths are intrinsic. If a cell needs constraint + overflow scroll, set `max-width` on an inner `div` with `overflow-x: auto` rather than messing with table layout.
+Two patterns:
+
+- **Vertical / data table** — rows are records, columns are attributes (e.g., the cafe list on Home). Opt in with `<table class="data-table">`. Gets: full-width, zebra stripes (4% CanvasText), `white-space: nowrap` + `overflow: hidden` + `text-overflow: ellipsis` on cells, modest cell padding. Page-specific column widths live in a uniquely-named class on the same table (e.g., `cafe-list`) — don't scope page CSS with page-name selectors in `global.css`.
+- **Horizontal / detail table** — rows are label/value pairs (e.g., the cafe detail page). Uses default browser table styling. Add a class if/when it needs treatment, but most of it should not.
+
+If a cell needs a width constraint + overflow scroll, wrap the content in an inner `div` with `max-width` + `overflow-x: auto`. Don't reach for `table-layout: fixed` unless you really need it.
+
+**Rule:** `global.css` selectors should be page-agnostic. Page-specific styling either gets a unique class name on the element (preferred for small one-offs) or a page-scoped CSS module file (for larger surfaces).

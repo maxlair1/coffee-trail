@@ -6,7 +6,7 @@ export const COLOR_PRESETS = [
 
 export const DEFAULT_COLOR = '#888888';
 
-export const LOADING = 'Loading...';
+export const LOADING = 'Percolating...';
 
 export const US_STATES: { code: string; name: string }[] = [
 	{ code: 'AL', name: 'Alabama' },

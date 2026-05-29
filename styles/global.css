@@ -1,7 +1,26 @@
 @import url('./reset.css');
 
 :root {
+	/* Surfaces — alternate slightly toward CanvasText for subtle layering.
+	   Auto-flips per theme since CanvasText is the inverse of Canvas. */
+	--surface-0: Canvas;
+	--surface-1: color-mix(in srgb, CanvasText 4%, Canvas);
+	--surface-2: color-mix(in srgb, CanvasText 8%, Canvas);
+
+	/* Borders */
 	--border: color-mix(in srgb, CanvasText 20%, transparent);
+	--border-soft: color-mix(in srgb, CanvasText 10%, transparent);
+
+	/* Accents */
+	--accent: #2960D1;
+	--danger: #d33;
+
+	/* Motion */
+	--ease-out: var(--ease-out);
+}
+
+html, body {
+	overflow-x: hidden;
 }
 
 ul.plain {
@@ -96,7 +115,7 @@ button[data-variant="ghost"] {
 	border: 1px solid transparent;
 	padding: 0.25rem 0.5rem;
 	border-radius: 4px;
-	color: inherit;
+	color: color-mix(in srgb, CanvasText 65%, Canvas);
 	font: inherit;
 	cursor: pointer;
 }
@@ -104,6 +123,7 @@ button[data-variant="ghost"] {
 @media (hover: hover) {
 	button[data-variant="ghost"]:hover {
 		background: rgba(128, 128, 128, 0.15);
+		color: color-mix(in srgb, CanvasText 90%, Canvas);
 	}
 }
 
@@ -113,14 +133,14 @@ button[data-variant="ghost"]:active {
 
 button[data-variant="ghost"][data-active],
 button[data-variant="ghost"].is-active {
-	background: rgba(41, 96, 209, 0.18);
-	color: #2960D1;
+	background: color-mix(in srgb, var(--accent) 18%, transparent);
+	color: var(--accent);
 }
 
 @media (hover: hover) {
 	button[data-variant="ghost"][data-active]:hover,
 	button[data-variant="ghost"].is-active:hover {
-		background: rgba(41, 96, 209, 0.28);
+		background: color-mix(in srgb, var(--accent) 28%, transparent);
 	}
 }
 
@@ -129,19 +149,19 @@ button[data-variant="danger"] {
 	border: 1px solid transparent;
 	padding: 0.25rem 0.5rem;
 	border-radius: 4px;
-	color: #d33;
+	color: var(--danger);
 	font: inherit;
 	cursor: pointer;
 }
 
 @media (hover: hover) {
 	button[data-variant="danger"]:hover {
-		background: rgba(221, 51, 51, 0.12);
+		background: color-mix(in srgb, var(--danger) 12%, transparent);
 	}
 }
 
 button[data-variant="danger"]:active {
-	background: rgba(221, 51, 51, 0.22);
+	background: color-mix(in srgb, var(--danger) 22%, transparent);
 }
 
 .filters {
@@ -164,6 +184,115 @@ button[data-variant="danger"]:active {
 	overflow-x: auto;
 	max-width: 16rem;
 	scrollbar-width: thin;
+}
+
+/* Generic vertical data table — rows are records, each column is an attribute.
+   Apply via `<table class="data-table">`. Content truncates with ellipsis when
+   the table runs out of room. */
+table.data-table {
+	width: 100%;
+}
+
+table.data-table tbody tr:nth-child(even) {
+	background: color-mix(in srgb, CanvasText 4%, transparent);
+}
+
+@media (hover: hover) {
+	table.data-table tbody tr:hover {
+		background: color-mix(in srgb, CanvasText 8%, transparent);
+	}
+}
+
+table.data-table th,
+table.data-table td {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-right: 0.5rem;
+}
+
+table.cafe-list {
+	width: 100%;
+	max-width: 700px;
+	table-layout: auto;
+}
+
+/* Column styling keyed on data-col so positions can shift between
+   normal/edit mode without scrambling widths. */
+table.cafe-list [data-col="handle"],
+table.cafe-list [data-col="rank"],
+table.cafe-list [data-col="action"] {
+	width: 1px;
+	white-space: nowrap;
+}
+
+table.cafe-list [data-col="name"] {
+	min-width: 8rem;
+}
+
+table.cafe-list [data-col="location"] {
+	width: 20%;
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+table.cafe-list [data-col="date"] {
+	width: 5%;
+}
+
+@media (max-width: 600px) {
+	table.cafe-list [data-col="location"],
+	table.cafe-list [data-col="date"] {
+		display: none;
+	}
+}
+
+table.cafe-list [data-col="action"] button {
+	padding-top: 0;
+	padding-bottom: 0;
+	line-height: 1;
+}
+
+/* Archived rows dim wherever they appear, globally. */
+table.data-table tr[data-archived] {
+	opacity: 0.55;
+}
+
+.bottom-bar,
+.pickup-bar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 50;
+	background: var(--surface-1);
+	border-top: 1px solid var(--border-soft);
+	padding: 0.5rem 0.75rem;
+}
+
+.pickup-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+/* Reorder mode: insertion slot rows only — the data rows themselves stay
+   unstyled. Without this, the slots have no hit area or visual cue. */
+tr.insertion-slot {
+	cursor: pointer;
+}
+
+tr.insertion-slot td {
+	padding: 0;
+	height: 0.4rem;
+	border-top: 2px solid transparent;
+}
+
+@media (hover: hover) {
+	tr.insertion-slot:hover td {
+		border-top-color: var(--accent);
+	}
 }
 
 .row-tags .tag-pill {
@@ -451,7 +580,7 @@ button[data-variant="danger"]:active {
 	position: absolute;
 	bottom: calc(100% + 4px);
 	left: 50%;
-	transform: translateX(-50%) translateY(4px);
+	transform: translateX(-50%);
 	z-index: 100;
 	padding: 0.25rem 0.5rem;
 	border-radius: 4px;
@@ -462,21 +591,25 @@ button[data-variant="danger"]:active {
 	white-space: nowrap;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.1s ease, transform 0.1s ease;
 }
 
 [data-tooltip]:focus-visible::after {
 	opacity: 1;
-	transform: translateX(-50%) translateY(0);
-	transition-delay: 0.4s;
+	transition: opacity 0s 0.4s;
 }
 
 @media (hover: hover) {
 	[data-tooltip]:hover::after {
 		opacity: 1;
-		transform: translateX(-50%) translateY(0);
-		transition-delay: 0.4s;
+		transition: opacity 0s 0.4s;
 	}
+}
+
+/* abbr title is for screen readers — kill the default dotted underline + help
+   cursor so it reads as plain text visually. */
+abbr[title] {
+	text-decoration: none;
+	cursor: inherit;
 }
 
 .popover {
@@ -484,8 +617,8 @@ button[data-variant="danger"]:active {
 	position-area: bottom span-right;
 	margin: 0.25rem 0 0;
 	padding: 0.5rem;
-	border: 1px solid var(--border);
-	background: Canvas;
+	border: 1px solid var(--border-soft);
+	background: var(--surface-1);
 	color: CanvasText;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 	overflow: hidden;
@@ -494,12 +627,12 @@ button[data-variant="danger"]:active {
 	gap: 0.25rem;
 
 	opacity: 0;
-	transform: translateY(-4px);
+	transform: translateY(-2px);
 	transition:
-		opacity 0.15s ease-out,
-		transform 0.15s ease-out,
-		overlay 0.15s ease-out allow-discrete,
-		display 0.15s ease-out allow-discrete;
+		opacity 0.12s var(--ease-out),
+		transform 0.12s var(--ease-out),
+		overlay 0.12s var(--ease-out) allow-discrete,
+		display 0.12s var(--ease-out) allow-discrete;
 }
 
 .popover:popover-open {
@@ -511,7 +644,7 @@ button[data-variant="danger"]:active {
 @starting-style {
 	.popover:popover-open {
 		opacity: 0;
-		transform: translateY(-4px);
+		transform: translateY(-2px);
 	}
 }
 

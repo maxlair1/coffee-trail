@@ -1,6 +1,7 @@
 import { LocationProvider, Router, Route, hydrate, prerender as ssr } from 'preact-iso';
 
 import { Header } from './components/Header.jsx';
+import { Footer } from './components/Footer';
 import { Toaster } from './components/ui/Toaster';
 import { Home } from './pages/Home';
 import { Cafe } from './pages/Cafe';
@@ -28,6 +29,7 @@ export function App() {
 						<Route path='/tags' component={() => <AuthGuard><Tags/></AuthGuard>}></Route>
 					</Router>
 				</main>
+				<Footer />
 				<Toaster />
 			</LocationProvider>
 		</AuthProvider>
