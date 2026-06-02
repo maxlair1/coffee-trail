@@ -524,21 +524,6 @@ export function Cafe() {
 				<div style={{ height: '3.5rem' }} aria-hidden="true" />
 			)}
 		</section>
-
-		{(neighbors.prev || neighbors.next) && (
-			<nav class="bottom-bar" aria-label="Cafe navigation" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-				{neighbors.prev ? (
-					<a href={`/cafe/${neighbors.prev.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-						<Icon name="caret-left" /> #{neighbors.prev.displayed}
-					</a>
-				) : <span />}
-				{neighbors.next ? (
-					<a href={`/cafe/${neighbors.next.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-						#{neighbors.next.displayed} <Icon name="caret-right" />
-					</a>
-				) : <span />}
-			</nav>
-		)}
 		</>
 	);
 }
