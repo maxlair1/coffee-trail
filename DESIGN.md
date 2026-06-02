@@ -111,7 +111,7 @@ The map query is auto-derived from name/city/state/address. Pass `queryOverride`
 
 ## Image uploads
 
-`uploadCafeImage(file, cafeId)` from `src/utils/upload.ts` — downsamples to max 1600px on the long edge as JPEG (q=0.85) via canvas, then uploads to the `cafe-images` Supabase Storage bucket and returns the public URL. The bucket must exist and be public-readable; RLS must allow `insert` for authenticated users on `storage.objects` where bucket is `cafe-images`.
+`uploadCafeImage(file, cafeId)` from `src/utils/upload.ts` — downsamples to max 1600px on the long edge as JPEG (q=0.85) via canvas, then uploads to the `cafe_images` Supabase Storage bucket and returns the public URL. The bucket must exist and be public-readable; RLS must allow `insert` for authenticated users on `storage.objects` where bucket is `cafe_images`.
 
 ## Edit modes & dirty-state guards
 

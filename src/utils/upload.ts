@@ -1,6 +1,6 @@
 import { supabase } from '../api/client';
 
-const BUCKET = 'cafe-images';
+const BUCKET = 'cafe_images';
 const MAX_DIM = 1600;
 const QUALITY = 0.85;
 
@@ -44,7 +44,13 @@ export async function uploadCafeImage(file: File, cafeId: number): Promise<strin
 	const { error } = await supabase.storage
 		.from(BUCKET)
 		.upload(path, blob, { contentType: 'image/jpeg', upsert: false });
-	if (error) throw error;
+	if (error) {
+		const msg = (error as any).message ?? String(error);
+		if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('bucket')) {
+			throw new Error(`Storage bucket "${BUCKET}" not found. Create it in Supabase → Storage (public bucket, exact name "${BUCKET}").`);
+		}
+		throw error;
+	}
 	const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
 	return data.publicUrl;
 }

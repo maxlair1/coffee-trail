@@ -54,24 +54,14 @@ export function Header() {
 				gap: '1rem',
 				padding: '0.5rem',
 			}}>
-				<span style={{fontSize: '1.2rem'}}>☕️&nbsp;🥾&nbsp;Olivia's&nbsp;Coffee&nbsp;Trail&nbsp;&nbsp;</span>
-				<a href="/" class={url == '/' && 'active'}>
+				<a href="/" style={{ textDecoration: 'none', textDecorationColor: 'none', color: 'inherit'}}>
+					<span style={{fontSize: '1.2rem'}}>☕️&nbsp;🥾&nbsp;Olivia's&nbsp;Coffee&nbsp;Trail&nbsp;&nbsp;</span>
+				</a>
+				{/* <a href="/" class={url == '/' && 'active'}>
 					Home
-				</a>
-				<a href="#" class={url == '/blog' && 'active'}>
-					Blog
-				</a>
+				</a> */}
 			</nav>
 			<div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-				<button
-					type="button"
-					data-variant="ghost"
-					onClick={toggleTheme}
-					data-tooltip={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-					aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-				>
-					<Icon name={theme === 'dark' ? 'sun' : 'moon'} />
-				</button>
 				{!loading && session && (
 					<div style={{
 						display: 'inline-flex',
@@ -84,6 +74,15 @@ export function Header() {
 						<button data-variant="ghost" onClick={handleLogout}>Logout</button>
 					</div>
 				)}
+				<button
+					type="button"
+					data-variant="ghost"
+					onClick={toggleTheme}
+					data-tooltip={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+					aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+				>
+					<Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+				</button>
 			</div>
 		</header>
 	);

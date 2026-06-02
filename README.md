@@ -60,13 +60,13 @@ alter table ranked_cafes
 
 ### Storage bucket
 
-`cafe-images` — **public** bucket for the uploaded photos. Image uploads downsample to 1600px JPEG (q=0.85) client-side before uploading.
+`cafe_images` — **public** bucket for the uploaded photos. Image uploads downsample to 1600px JPEG (q=0.85) client-side before uploading.
 
 Required policy for logged-in upload:
 ```sql
 create policy "authenticated can upload cafe images"
 on storage.objects for insert to authenticated
-with check (bucket_id = 'cafe-images');
+with check (bucket_id = 'cafe_images');
 ```
 
 ### Auth

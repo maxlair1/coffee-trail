@@ -25,7 +25,8 @@ export function App() {
 						<Route path="/" component={Home} />
 						<Route default component={Home} />
 						<Route path='/login' component={Login}/>
-						<Route path='/cafe/:id' component={Cafe}></Route>
+						<Route path='/cafe/new' component={() => <AuthGuard><Cafe/></AuthGuard>}></Route>
+					<Route path='/cafe/:id' component={Cafe}></Route>
 						<Route path='/tags' component={() => <AuthGuard><Tags/></AuthGuard>}></Route>
 					</Router>
 				</main>

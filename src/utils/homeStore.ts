@@ -5,7 +5,6 @@ type HomeState = {
 	showSearch: boolean;
 	selectedTagIds: number[];
 	showArchived: boolean;
-	sortBy: 'rank' | 'date';
 	sortDir: 'asc' | 'desc';
 	scrollY: number;
 	update: (patch: Partial<Omit<HomeState, 'update'>>) => void;
@@ -18,7 +17,6 @@ export const useHomeStore = create<HomeState>(set => ({
 	showSearch: false,
 	selectedTagIds: [],
 	showArchived: false,
-	sortBy: 'rank',
 	sortDir: 'asc',
 	scrollY: 0,
 	update: patch => set(patch),

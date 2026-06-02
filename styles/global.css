@@ -213,7 +213,7 @@ table.data-table td {
 
 table.cafe-list {
 	width: 100%;
-	max-width: 700px;
+	max-width: 550px;
 	table-layout: auto;
 }
 
@@ -237,16 +237,6 @@ table.cafe-list [data-col="location"] {
 	text-overflow: ellipsis;
 }
 
-table.cafe-list [data-col="date"] {
-	width: 5%;
-}
-
-@media (max-width: 600px) {
-	table.cafe-list [data-col="location"],
-	table.cafe-list [data-col="date"] {
-		display: none;
-	}
-}
 
 table.cafe-list [data-col="action"] button {
 	padding-top: 0;
@@ -257,6 +247,40 @@ table.cafe-list [data-col="action"] button {
 /* Archived rows dim wherever they appear, globally. */
 table.data-table tr[data-archived] {
 	opacity: 0.55;
+}
+
+.park-zone {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 60;
+	padding: 0.5rem 0.75rem;
+	min-height: 3.5rem;
+	background: var(--surface-1);
+	border-top: 2px dashed var(--border);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.park-zone[data-over] {
+	border-color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 12%, var(--surface-1));
+}
+
+.drag-ghost {
+	position: fixed;
+	pointer-events: none;
+	z-index: 1000;
+	background: var(--surface-1);
+	border: 1px solid var(--border);
+	padding: 0.25rem 0.5rem;
+	font-size: 0.9em;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	display: inline-flex;
+	align-items: center;
 }
 
 .bottom-bar,

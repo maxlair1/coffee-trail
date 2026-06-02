@@ -5,7 +5,7 @@ export type Cafe = {
   created_at: string;
   name: string;
   images: string[] | null;
-  body: string;
+  body: string | null;
   date_visited: string | null; // ISO date string "YYYY-MM-DD"
   city: string | null;
   state: string | null;

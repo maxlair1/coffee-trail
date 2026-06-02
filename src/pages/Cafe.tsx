@@ -1,3 +1,4 @@
+import { Fragment } from 'preact';
 import { useRoute } from 'preact-iso';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { type Cafe as CafeT } from '../api/cafe.types';
@@ -5,9 +6,7 @@ import { type Tag as TagT } from '../api/tag.types';
 import { supabase } from '../api/client';
 import { Map as CafeMap } from '../components/Map';
 import { Tag } from '../components/ui/Tag';
-import { Popover } from '../components/ui/Popover';
 import { Icon } from '../components/ui/Icon';
-import { TagMultiSelect } from '../components/ui/TagMultiSelect';
 import { Gallery } from '../components/ui/Gallery';
 import { formatDate } from '../utils/date';
 import { LOADING, US_STATES } from '../constants';
@@ -17,7 +16,6 @@ import { compressRanks } from '../utils/rank';
 import { useAuth } from '../../context/AuthContext';
 
 const FIELDS: { label: string; value: (c: CafeT, tags: Map<number, TagT>) => any }[] = [
-	{ label: 'Rank', value: c => c.rank },
 	{ label: 'Visited', value: c => c.date_visited && formatDate(c.date_visited) },
 	{ label: 'City', value: c => c.city },
 	{ label: 'State', value: c => c.state },
@@ -53,9 +51,40 @@ export function Cafe() {
 
 	const { params } = useRoute();
 	const id = params.id ?? '';
+	// `/cafe/new` is a literal route (no :id). `/cafe/:id` always has one.
+	const isNew = !params.id || params.id === 'new';
 
 	useEffect(() => {
 		async function fetchData() {
+			if (isNew) {
+				const [tagsRes, rankRes] = await Promise.all([
+					supabase.from('tags').select('*'),
+					supabase.from('ranked_cafes').select('id, rank, archived, name').order('rank'),
+				]);
+				const empty: CafeT = {
+					id: 0,
+					created_at: '',
+					name: '',
+					images: null,
+					body: '',
+					date_visited: null,
+					city: null,
+					state: null,
+					address: null,
+					tags: null,
+					rank: 0,
+					archived: false,
+					map_hidden: false,
+					map_query: null,
+				};
+				setCafe(empty);
+				setDraft(empty);
+				setEditing(true);
+				setTags(tagsRes.data ?? []);
+				setRankList(rankRes.data ?? []);
+				setLoading(false);
+				return;
+			}
 			const [cafeRes, tagsRes, rankRes] = await Promise.all([
 				supabase.from('ranked_cafes').select('*').eq('id', Number(id)).single(),
 				supabase.from('tags').select('*'),
@@ -70,7 +99,7 @@ export function Cafe() {
 			setLoading(false);
 		}
 		fetchData();
-	}, [id]);
+	}, [id, isNew]);
 
 	const tagById = useMemo(() => new Map(tags.map(t => [t.id, t])), [tags]);
 	const selectedTagSet = useMemo(() => new Set(draft?.tags ?? []), [draft]);
@@ -83,13 +112,11 @@ export function Cafe() {
 		if (!cafe.archived) {
 			displayed = compressRanks(nonArchived).find(c => c.id === cafe.id)?.rank ?? cafe.rank;
 		}
-		// "raw" = position among ALL cafes (archived included), 1-indexed by rank ascending.
 		const rawSorted = [...rankList].sort((a, b) => a.rank - b.rank);
 		const raw = rawSorted.findIndex(c => c.id === cafe.id) + 1 || cafe.rank;
 		return { displayed, total, raw };
 	}, [cafe, rankList]);
 
-	// Immediate neighbors in the non-archived ranked sequence.
 	const neighbors = useMemo(() => {
 		if (!cafe) return { prev: null, next: null };
 		const seq = rankList.filter(c => !c.archived).sort((a, b) => a.rank - b.rank);
@@ -111,10 +138,14 @@ export function Cafe() {
 		return keys.some(k => JSON.stringify(draft[k]) !== JSON.stringify(cafe[k]));
 	}, [editing, draft, cafe]);
 
-	// Browser-level guard for full page reload / external nav.
+	// Skip the beforeunload prompt when WE'RE the ones navigating
+	// (e.g., handing off the create flow to the home page).
+	const skipUnloadRef = useRef(false);
+
 	useEffect(() => {
 		if (!dirty) return;
 		const handler = (e: BeforeUnloadEvent) => {
+			if (skipUnloadRef.current) return;
 			e.preventDefault();
 			e.returnValue = '';
 		};
@@ -130,6 +161,12 @@ export function Cafe() {
 
 	function cancel() {
 		if (dirty && !confirm('Discard unsaved changes?')) return;
+		if (isNew) {
+			// /cafe/new is a one-shot page — bail back home.
+			skipUnloadRef.current = true;
+			window.location.href = '/';
+			return;
+		}
 		setDraft(null);
 		setEditing(false);
 	}
@@ -175,10 +212,32 @@ export function Cafe() {
 
 	async function save() {
 		if (!draft) return;
+		const name = (draft.name ?? '').trim();
+		const body = (draft.body ?? '').trim();
+		if (!name) {
+			toast.error('Name is required');
+			return;
+		}
+
+		if (isNew) {
+			// Don't insert yet — stash the draft and bounce to home so user can drag
+			// it into rank position. The actual INSERT happens when they hit Save there.
+			sessionStorage.setItem('pendingCafe', JSON.stringify({
+				name,
+				body: body || '',
+				city: draft.city ?? '',
+				state: draft.state ?? '',
+			}));
+			toast.success('Drag into position, then Save to commit');
+			skipUnloadRef.current = true;
+			window.location.href = '/';
+			return;
+		}
+
 		setSaving(true);
 		const payload: Record<string, any> = {
-			name: draft.name,
-			body: draft.body,
+			name,
+			body: body || null,
 			date_visited: draft.date_visited,
 			city: draft.city,
 			state: draft.state,
@@ -258,25 +317,34 @@ export function Cafe() {
 				)}
 			</div>
 
-			<h1>
-				<em style={{ color: 'orange', fontWeight: 'bold' }}>
-					#{rankInfo?.displayed ?? cafe.rank}
-					{rankInfo && <small style={{ color: 'inherit', opacity: 0.7, fontWeight: 'normal' }}>{' / '}{rankInfo.total}</small>}
-				</em>
-				{rankInfo && rankInfo.raw !== rankInfo.displayed && (
-					<small style={{ marginLeft: '0.5rem', opacity: 0.6 }}>raw #{rankInfo.raw}</small>
+			<header>
+				<h1>
+					{editing && draft ? (
+						<input
+							value={draft.name}
+							onInput={e => patch({ name: e.currentTarget.value })}
+							style={{ font: 'inherit', width: '60%' }}
+						/>
+					) : (
+						cafe.name
+					)}
+				</h1>
+				<p>
+					<em style={{ color: 'orange' }}>
+						#{rankInfo?.displayed ?? cafe.rank}
+					</em>
+					<small style={{ marginLeft: '0.5rem', opacity: 0.6 }}>
+						(#
+						{rankInfo && rankInfo.raw !== rankInfo.displayed && rankInfo.raw}
+						&nbsp;including archived)
+					</small>
+				</p>
+				{(source.city || source.state) && (
+					<p style={{ opacity: 0.7 }}>
+						{[source.city, source.state].filter(Boolean).join(', ')}
+					</p>
 				)}
-				&nbsp;&nbsp;
-				{editing && draft ? (
-					<input
-						value={draft.name}
-						onInput={e => patch({ name: e.currentTarget.value })}
-						style={{ font: 'inherit', width: '60%' }}
-					/>
-				) : (
-					cafe.name
-				)}
-			</h1>
+			</header>
 
 			{showMap && (
 				<CafeMap
@@ -370,7 +438,7 @@ export function Cafe() {
 							/>
 						</td></tr>
 						<tr><th>Tags</th><td>
-							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+							<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center', marginBottom: '0.5rem' }}>
 								{(draft.tags ?? []).map(tid => {
 									const t = tagById.get(tid);
 									return t ? (
@@ -383,25 +451,28 @@ export function Cafe() {
 										/>
 									) : null;
 								})}
-								<Popover
-									trigger={<Icon name="plus" />}
-									tooltip="Add tag"
-									variant="ghost"
-								>
-									<TagMultiSelect
-										tags={tags}
-										selected={selectedTagSet}
-										onToggle={toggleTag}
-									/>
-								</Popover>
 							</div>
+							<select
+								value=""
+								onChange={e => {
+									const val = (e.currentTarget as HTMLSelectElement).value;
+									if (!val) return;
+									toggleTag(Number(val));
+									(e.currentTarget as HTMLSelectElement).value = '';
+								}}
+							>
+								<option value="">Add a tag…</option>
+								{tags
+									.filter(t => !selectedTagSet.has(t.id))
+									.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+							</select>
 						</td></tr>
 						<tr><th>Notes</th><td>
 							<textarea
 								rows={6}
 								style={{ width: '100%', font: 'inherit' }}
-								value={draft.body}
-								onInput={e => patch({ body: e.currentTarget.value })}
+								value={draft.body ?? ''}
+								onInput={e => patch({ body: e.currentTarget.value || null })}
 							/>
 						</td></tr>
 						<tr><th>Archived</th><td>
@@ -417,18 +488,21 @@ export function Cafe() {
 					</tbody>
 				</table>
 			) : (
-				<table>
-					<tbody>
-						{FIELDS.map(f => {
-							const cafeForDisplay = rankInfo
-								? { ...cafe, rank: rankInfo.displayed }
-								: cafe;
-							const v = f.value(cafeForDisplay, tagById);
-							if (!v) return null;
-							return <tr><th>{f.label}</th><td>{v}</td></tr>;
-						})}
-					</tbody>
-				</table>
+				<dl class="cafe-detail">
+					{FIELDS.map(f => {
+						const cafeForDisplay = rankInfo
+							? { ...cafe, rank: rankInfo.displayed }
+							: cafe;
+						const v = f.value(cafeForDisplay, tagById);
+						if (!v) return null;
+						return (
+							<Fragment key={f.label}>
+								<dt>{f.label}</dt>
+								<dd>{v}</dd>
+							</Fragment>
+						);
+					})}
+				</dl>
 			)}
 
 			{(neighbors.prev || neighbors.next) && (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "preact/hooks"
+import { useState } from "preact/hooks"
 import { supabase } from "../api/client";
 // import { useAuth } from "../../context/AuthContext";
 
@@ -31,15 +31,12 @@ export function Login() {
     }
 
     return (
-        <div style={{
-            // maxWidth: '60ch',
-            // marginInline: 'auto'
-        }}>
+        <div>
             <h2>Login</h2>
-            <div style={{
-                display: 'inline-flex',
-                flexDirection: 'column',
-            }}>
+            <form
+                onSubmit={e => { e.preventDefault(); handleLogin(); }}
+                style={{ display: 'inline-flex', flexDirection: 'column' }}
+            >
                 {status === "error" && <p>{errorMsg}</p>}
                 {status === "success" && <p style={{color: 'green'}}>✓ Successfully logged in</p>}
                 <label for="uname"><b>Email</b></label>
@@ -50,15 +47,13 @@ export function Login() {
                     <input type="checkbox" checked={showPass} onChange={() => setShowPass(!showPass)} name="remember"/> Show password
                 </label>
                 <br/>
-                <button type="submit" onClick={handleLogin}>
+                <button type="submit">
                     {status === "idle" && "Login"}
                     {status === "loading" && "Signing in..."}
                     {status === "success" && "✓ Success!"}
                     {status === "error" && "Try again"}
                 </button>
-            </div>
-            <br/>
-            {/* <span class="psw">Forgot <a href="#">password?</a></span> */}
+            </form>
         </div>
     )
 }
