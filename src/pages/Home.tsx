@@ -463,7 +463,7 @@ export function Home() {
 
 	return (
 		<div class="home">
-			<div style={{
+			{/* <div style={{
 				display: 'inline-flex',
 				alignItems: 'center',
 				padding: '0.25rem 0.5rem',
@@ -471,7 +471,7 @@ export function Home() {
 				marginBottom: '0.5rem',
 			}}>
 				<span style={{ color: 'orange', textWrap: 'nowrap' }}>🚧 Work in progress</span>
-			</div>
+			</div> */}
 			<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
 				<h1>Ranked cafes</h1>
 				{editMode && (
