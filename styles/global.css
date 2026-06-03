@@ -205,7 +205,7 @@ table.data-table tbody tr:nth-child(even) {
 
 table.data-table th,
 table.data-table td {
-	white-space: nowrap;
+	/* white-space: nowrap; */
 	overflow: hidden;
 	text-overflow: ellipsis;
 	padding-right: 0.5rem;
@@ -225,13 +225,17 @@ table.cafe-list [data-col="action"] {
 	white-space: nowrap;
 }
 
+table.cafe-list [data-col="rank"] {
+	width: 5%;
+}
 table.cafe-list [data-col="name"] {
+	/* white-space: nowrap; */
+	width: 55%;
 	min-width: 8rem;
 }
 
 table.cafe-list [data-col="location"] {
-	width: 100%;
-	max-width: 10rem;
+	width: 45%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
