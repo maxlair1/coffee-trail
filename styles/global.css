@@ -20,7 +20,7 @@
 }
 
 html, body {
-	overflow-x: hidden;
+	overflow-x: clip;
 }
 
 ul.plain {
@@ -169,7 +169,6 @@ button[data-variant="danger"]:active {
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.5rem;
-	margin-bottom: 0.75rem;
 }
 
 .search-input {
@@ -213,7 +212,6 @@ table.data-table td {
 
 table.cafe-list {
 	width: 100%;
-	max-width: 550px;
 	table-layout: auto;
 }
 
@@ -231,7 +229,7 @@ table.cafe-list [data-col="name"] {
 }
 
 table.cafe-list [data-col="location"] {
-	width: 20%;
+	width: 100%;
 	max-width: 10rem;
 	overflow: hidden;
 	text-overflow: ellipsis;

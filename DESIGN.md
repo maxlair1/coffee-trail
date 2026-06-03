@@ -139,6 +139,10 @@ Durations: keep them short. Popovers, hover state changes: **100–120ms**. Anyt
 
 Transforms should be subtle (`translateY(-2px)`, `scale(1.05)`) — large moves draw the eye away from the actual change.
 
+## Overflow on the root
+
+`html, body` use `overflow-x: clip` — *not* `overflow-x: hidden`. Hidden creates a new containing block, which silently breaks `position: sticky` for every descendant. `clip` visually clips horizontal overflow without that side-effect. Same reason on a smaller scope: don't set `overflow: hidden` on an ancestor of a sticky element unless you actually mean for sticky to detach.
+
 ## Rounded corners
 
 Default to **sharp edges**. Only buttons and form fields (`<input>`, `<select>`, `<textarea>`) get rounded corners (≤4px). Tag pills (`.tag-pill`) keep their 999px radius because pill shape is part of their identity. Tiny "control" elements (color swatches, the thumb remove × button) can keep small rounding since they're button-like.

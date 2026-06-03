@@ -275,7 +275,6 @@ export function Home() {
 		function onMove(e: PointerEvent) {
 			setPointerPos({ x: e.clientX, y: e.clientY });
 
-			// Hovering the parking zone? Pause swapping there.
 			const zone = zoneRef.current;
 			if (zone) {
 				const r = zone.getBoundingClientRect();
@@ -286,7 +285,6 @@ export function Home() {
 			}
 			setOverZone(false);
 
-			// Find row whose Y range contains pointer.
 			const rows = document.querySelectorAll('tr[data-cafe-id]');
 			let overId: number | null = null;
 			for (const row of rows) {
@@ -297,7 +295,6 @@ export function Home() {
 				}
 			}
 			if (!overId || overId === draggingId) return;
-			// Functional update so we always read the latest working order.
 			setWorking(prev => {
 				const fromIdx = prev.findIndex(c => c.id === draggingId);
 				const toIdx = prev.findIndex(c => c.id === overId);
@@ -311,7 +308,6 @@ export function Home() {
 		}
 
 		function onUp() {
-			// Park the dragged item if we were over the zone at release.
 			setWorking(prev => {
 				if (!overZone || draggingId === null) return prev;
 				const item = prev.find(c => c.id === draggingId);
@@ -459,164 +455,201 @@ export function Home() {
 		setActionCafe(cafe);
 	}
 
-	const draggingCafe = draggingId !== null ? working.find(c => c.id === draggingId) : null;
-
 	return (
-		<div class="home">
-			{/* <div style={{
-				display: 'inline-flex',
-				alignItems: 'center',
-				padding: '0.25rem 0.5rem',
-				backgroundColor: 'rgba(255, 165, 0, 0.15)',
+		<div class="home" style={{
+			maxWidth: '550px'
+		}}>
+			<header style={{
+				position: 'sticky',
+				top: 0,
+				zIndex: 20,
+				background: 'var(--surface-0)',
+				paddingBottom: '0.5rem',
 				marginBottom: '0.5rem',
+				marginTop: '1rem',
+				borderBottom: '1px solid var(--border)',
 			}}>
-				<span style={{ color: 'orange', textWrap: 'nowrap' }}>🚧 Work in progress</span>
-			</div> */}
-			<div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-				<h1>Ranked cafes</h1>
-				{editMode && (
-					<span style={{
-						display: 'inline-flex',
-						alignItems: 'center',
-						padding: '0.25rem 0.5rem',
-						backgroundColor: 'rgba(255, 165, 0, 0.15)',
-						color: 'orange',
-						textWrap: 'nowrap',
-					}}>
-						Editing
-					</span>
-				)}
-			</div>
+				<div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '0.5rem' }}>
+					<h1>Ranked cafes</h1>
+					{editMode && (
+						<span style={{
+							display: 'inline-flex',
+							alignItems: 'center',
+							padding: '0.25rem 0.5rem',
+							backgroundColor: 'rgba(255, 165, 0, 0.15)',
+							color: 'orange',
+							textWrap: 'nowrap',
+						}}>
+							Editing
+						</span>
+					)}
+				</div>
 
-			<div class="filters">
-				{editMode ? (
-					<>
-						<button
-							type="button"
-							onClick={saveReorder}
-							disabled={!dirty || saving || parkedItems.length > 0}
-							title={parkedItems.length > 0 ? 'Drop the parked item back in the list to save' : undefined}
-						>
-							{saving ? 'Saving…' : `Save${touched.size ? ` (${touched.size})` : ''}`}
-						</button>
-						<button
-							type="button"
-							data-variant="ghost"
-							onClick={cancelEdit}
-							disabled={saving}
-						>
-							Cancel
-						</button>
-					</>
-				) : (
-					<>
-
-						{!editMode && showSearch ? (
-							<>
-								<input
-									style={{
-										maxWidth: '2rem',
-									}}
-									ref={searchRef}
-									type="search"
-									placeholder="Search..."
-									value={query}
-									onInput={e => setQuery(e.currentTarget.value)}
-									class="search-input"
-									onBlur={() => {
-										if (!query || query === null)
-										setShowSearch(s => !s)
-									}}
-								/>
-							</>
-						) : (<button
+				<div class="filters">
+					{editMode && (
+						<>
+							<button
 								type="button"
-								data-variant="ghost"
-								data-active={showSearch || query ? '' : undefined}
-								onClick={() => setShowSearch(s => !s)}
-								data-tooltip="Search"
-								aria-label="Search"
-								aria-pressed={showSearch}
+								onClick={saveReorder}
+								disabled={!dirty || saving || parkedItems.length > 0}
+								title={parkedItems.length > 0 ? 'Drop parked items back in the list first' : undefined}
 							>
-								<Icon name="magnifying-glass" />
+								{saving ? 'Saving…' : `Save${touched.size ? ` (${touched.size})` : ''}`}
 							</button>
-						)}
-
-						<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-							<select
-								value=""
-								onChange={e => {
-									const val = (e.currentTarget as HTMLSelectElement).value;
-									if (!val) return;
-									toggleTag(Number(val));
-									(e.currentTarget as HTMLSelectElement).value = '';
-								}}
-							>
-								<option value="">Filter by tags</option>
-								{tags
-									.filter(t => !selectedTags.has(t.id))
-									.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-							</select>
-							{[...selectedTags].map(id => {
-								const t = tags.find(t => t.id === id);
-								if (!t) return null;
-								return (
-									<Tag
-										key={t.id}
-										name={t.name}
-										color={t.color}
-										icon={t.icon}
-										onClear={() => toggleTag(t.id)}
-									/>
-								);
-							})}
-						</label>
-
-						<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-							<input
-								type="checkbox"
-								checked={showArchived}
-								onChange={e => setShowArchived(e.currentTarget.checked)}
-							/>
-							show archived
-						</label>
-
-						{activeFilterCount > 0 && (
 							<button
 								type="button"
 								data-variant="ghost"
-								onClick={clearAllFilters}
+								onClick={cancelEdit}
+								disabled={saving}
 							>
-								Clear {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
+								Cancel
 							</button>
-						)}
+						</>
+					)}
 
-						{canEdit && (
-							<>
+							{!editMode && showSearch ? (
+								<>
+									<input
+										style={{
+											maxWidth: '2rem',
+										}}
+										ref={searchRef}
+										type="search"
+										placeholder="Search..."
+										value={query}
+										onInput={e => setQuery(e.currentTarget.value)}
+										class="search-input"
+										onBlur={() => {
+											if (!query || query === null)
+											setShowSearch(s => !s)
+										}}
+									/>
+								</>
+							) : (<button
+									type="button"
+									data-variant="ghost"
+									data-active={showSearch || query ? '' : undefined}
+									onClick={() => setShowSearch(s => !s)}
+									data-tooltip="Search"
+									aria-label="Search"
+									aria-pressed={showSearch}
+								>
+									<Icon name="magnifying-glass" />
+								</button>
+							)}
+
+							<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+								<select
+									value=""
+									onChange={e => {
+										const val = (e.currentTarget as HTMLSelectElement).value;
+										if (!val) return;
+										toggleTag(Number(val));
+										(e.currentTarget as HTMLSelectElement).value = '';
+									}}
+								>
+									<option value="">Filter by tags</option>
+									{tags
+										.filter(t => !selectedTags.has(t.id))
+										.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+								</select>
+								{[...selectedTags].map(id => {
+									const t = tags.find(t => t.id === id);
+									if (!t) return null;
+									return (
+										<Tag
+											key={t.id}
+											name={t.name}
+											color={t.color}
+											icon={t.icon}
+											onClear={() => toggleTag(t.id)}
+										/>
+									);
+								})}
+							</label>
+
+							<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+								<input
+									type="checkbox"
+									checked={showArchived}
+									onChange={e => setShowArchived(e.currentTarget.checked)}
+								/>
+								show archived
+							</label>
+
+							{activeFilterCount > 0 && (
 								<button
 									type="button"
 									data-variant="ghost"
-									onClick={() => enterEditMode()}
-									data-tooltip="Edit rank order"
-									aria-label="Edit rank order"
+									onClick={clearAllFilters}
 								>
-									<Icon name="pencil-simple" /> Edit
+									Clear {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
 								</button>
-								<a href="/cafe/new" data-variant="ghost">
+							)}
+
+							{!editMode && canEdit && (
+								<>
 									<button
 										type="button"
 										data-variant="ghost"
-										data-tooltip="Add a new cafe"
-										aria-label="Add a new cafe"
+										onClick={() => enterEditMode()}
+										data-tooltip="Edit rank order"
+										aria-label="Edit rank order"
 									>
-										<Icon name="plus" /> Add
+										<Icon name="pencil-simple" /> Edit
 									</button>
-								</a>
-							</>
-						)}
-					</>
+									<a href="/cafe/new" data-variant="ghost">
+										<button
+											type="button"
+											data-variant="ghost"
+											data-tooltip="Add a new cafe"
+											aria-label="Add a new cafe"
+										>
+											<Icon name="plus" /> Add
+										</button>
+									</a>
+								</>
+							)}
+				</div>
+
+				{editMode && (draggingId !== null || parkedItems.length > 0) && (
+					<aside
+						ref={zoneRef}
+						data-over={overZone || undefined}
+						style={{
+							padding: '0.5rem 0.75rem',
+							minHeight: '3rem',
+							border: '2px dashed var(--border)',
+							borderColor: overZone ? 'var(--accent)' : 'var(--border)',
+							background: overZone ? 'color-mix(in srgb, var(--accent) 12%, var(--surface-1))' : 'var(--surface-1)',
+							display: 'flex',
+							flexWrap: 'wrap',
+							gap: '0.5rem',
+							alignItems: 'center',
+							marginTop: '0.5rem',
+						}}
+					>
+						<small style={{ opacity: 0.6 }}>Parking</small>
+						{parkedItems.length === 0 && <small>Drop here to set aside</small>}
+						{parkedItems.map(item => (
+							<div key={item.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.5rem', border: '1px solid var(--border-soft)', background: 'var(--surface-0)' }}>
+								<span
+									onPointerDown={(e: PointerEvent) => onParkedPointerDown(e, item)}
+									style={{
+										cursor: draggingId !== null ? 'grabbing' : 'grab',
+										touchAction: 'none',
+										display: 'inline-flex',
+									}}
+									aria-label={`Drag ${item.name} into the list`}
+								>
+									<Icon name="dots-six-vertical" />
+								</span>
+								<strong>{item.name}</strong>
+							</div>
+						))}
+					</aside>
 				)}
-			</div>
+			</header>
 
 			<table class="data-table cafe-list">
 				<thead>
@@ -696,48 +729,21 @@ export function Home() {
 				<p><small>No cafes match your filters.</small></p>
 			)}
 
-			{/* Parking zone — visible while dragging OR while something is parked. */}
-			{editMode && (draggingId !== null || parkedItems.length > 0) && (
-				<aside
-					ref={zoneRef}
-					class="park-zone"
-					data-over={overZone || undefined}
-					data-occupied={parkedItems.length > 0 ? '' : undefined}
-				>
-					<small style={{ opacity: 0.6 }}>Parking</small>
-					{parkedItems.length === 0 && <small>Drop here to set aside</small>}
-					{parkedItems.map(item => (
-						<div key={item.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.25rem 0.5rem', border: '1px solid var(--border-soft)', background: 'var(--surface-0)' }}>
-							<span
-								onPointerDown={(e: PointerEvent) => onParkedPointerDown(e, item)}
-								style={{
-									cursor: draggingId !== null ? 'grabbing' : 'grab',
-									touchAction: 'none',
-									display: 'inline-flex',
-								}}
-								aria-label={`Drag ${item.name} back into list`}
-							>
-								<Icon name="dots-six-vertical" />
-							</span>
-							<strong>{item.name}</strong>
-						</div>
-					))}
-				</aside>
-			)}
-
-			{/* Ghost element locked to the cursor while dragging. */}
-			{editMode && draggingId !== null && pointerPos && draggingCafe && (
-				<div
-					class="drag-ghost"
-					style={{
-						left: `${pointerPos.x + 12}px`,
-						top: `${pointerPos.y + 12}px`,
-					}}
-				>
-					<Icon name="dots-six-vertical" />&nbsp;{draggingCafe.name}
-				</div>
-			)}
-
+			{editMode && draggingId !== null && pointerPos && (() => {
+				const cafe = working.find(c => c.id === draggingId);
+				if (!cafe) return null;
+				return (
+					<div
+						class="drag-ghost"
+						style={{
+							left: `${pointerPos.x + 12}px`,
+							top: `${pointerPos.y + 12}px`,
+						}}
+					>
+						<Icon name="dots-six-vertical" />&nbsp;{cafe.name}
+					</div>
+				);
+			})()}
 
 			{/* Per-row action dialog (replaces the old more-popover column) */}
 			<dialog
