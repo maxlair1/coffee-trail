@@ -3,6 +3,8 @@ import { useEffect, useState } from 'preact/hooks';
 import { useAuth } from "../../context/AuthContext";
 import { supabase } from '../api/client';
 import { Icon } from './ui/Icon';
+import Logo from './ui/Logo';
+import Stamp from './ui/Stamp';
 
 type Theme = 'light' | 'dark';
 
@@ -54,8 +56,9 @@ export function Header() {
 				gap: '1rem',
 				padding: '0.5rem',
 			}}>
-				<a href="/" style={{ textDecoration: 'none', textDecorationColor: 'none', color: 'inherit'}}>
-					<span style={{fontSize: '1.2rem'}}>☕️&nbsp;🥾&nbsp;Olivia's&nbsp;Coffee&nbsp;Trail&nbsp;&nbsp;</span>
+				<a href="/" style={{ textDecoration: 'none', textDecorationColor: 'none', color: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '0.5rem'}}>
+					<Stamp height={50} width={50}/>
+					<span style={{fontSize: '1.2rem'}}>Olivia's&nbsp;Coffee&nbsp;Trail&nbsp;&nbsp;</span>
 				</a>
 				<a href="/suggest" class={url == '/' && 'active'}>
 					Got a suggestion?

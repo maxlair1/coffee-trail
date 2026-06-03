@@ -4,18 +4,24 @@ import { toast } from '../utils/toast';
 
 const STORAGE_KEY = 'emailSignupHidden';
 
-export function EmailSignup() {
+type Props = {
+	/** Show the × dismiss button (defaults to true). Set false on pages where
+	    you want the signup permanently visible. */
+	dismissible?: boolean;
+};
+
+export function EmailSignup({ dismissible = true }: Props = {}) {
 	const [email, setEmail] = useState('');
 	const [sending, setSending] = useState(false);
 	const [done, setDone] = useState(false);
 	const [hidden, setHidden] = useState(false);
 
-	// Check localStorage after mount (avoids SSR hydration mismatch).
 	useEffect(() => {
+		if (!dismissible) return;
 		try {
 			if (localStorage.getItem(STORAGE_KEY) === '1') setHidden(true);
 		} catch {}
-	}, []);
+	}, [dismissible]);
 
 	function dismiss() {
 		try { localStorage.setItem(STORAGE_KEY, '1'); } catch {}
@@ -52,26 +58,28 @@ export function EmailSignup() {
 			marginBlock: '1.5rem',
 			position: 'relative',
 		}}>
-			<button
-				type="button"
-				onClick={dismiss}
-				aria-label="Hide email signup"
-				data-tooltip="Hide"
-				style={{
-					position: 'absolute',
-					top: '0.25rem',
-					right: '0.25rem',
-					background: 'none',
-					border: 'none',
-					color: 'orange',
-					cursor: 'pointer',
-					font: 'inherit',
-					lineHeight: 1,
-					padding: '0.25rem 0.5rem',
-				}}
-			>
-				×
-			</button>
+			{dismissible && (
+				<button
+					type="button"
+					onClick={dismiss}
+					aria-label="Hide email signup"
+					data-tooltip="Hide"
+					style={{
+						position: 'absolute',
+						top: '0.25rem',
+						right: '0.25rem',
+						background: 'none',
+						border: 'none',
+						color: 'orange',
+						cursor: 'pointer',
+						font: 'inherit',
+						lineHeight: 1,
+						padding: '0.25rem 0.5rem',
+					}}
+				>
+					×
+				</button>
+			)}
 			<p style={{ margin: 0, color: 'orange', fontWeight: 'bold' }}>
 				Get notified when Olivia finds a new favorite ☕
 			</p>

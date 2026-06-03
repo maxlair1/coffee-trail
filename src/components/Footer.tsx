@@ -4,6 +4,9 @@ export function Footer() {
 	const year = new Date().getFullYear();
 	return (
 		<>
+			<div style={{ padding: '0 0.5rem' }}>
+				<EmailSignup dismissible={false} />
+			</div>
 			<footer style={{
 				borderTop: '1px solid var(--border-soft)',
 				padding: '1rem 0.5rem',
