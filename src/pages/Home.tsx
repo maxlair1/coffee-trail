@@ -672,7 +672,7 @@ export function Home() {
 				)}
 			</div>
 
-			<table class="data-table cafe-list">
+			<table class="data-table cafe-list" style={editMode ? { userSelect: 'none' } : undefined}>
 				<thead>
 					<tr style={{ textAlign: 'left' }}>
 						<th
@@ -708,7 +708,6 @@ export function Home() {
 											background: 'color-mix(in srgb, var(--accent) 30%, transparent)',
 											outline: '2px solid var(--accent)',
 										} : {}),
-										touchAction: editMode ? 'none' : undefined,
 									}}
 								>
 									<td data-col="rank">
