@@ -230,12 +230,12 @@ table.cafe-list [data-col="rank"] {
 }
 table.cafe-list [data-col="name"] {
 	/* white-space: nowrap; */
-	width: 55%;
+	width: 60%;
 	min-width: 8rem;
 }
 
 table.cafe-list [data-col="location"] {
-	width: 45%;
+	width: 40%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
