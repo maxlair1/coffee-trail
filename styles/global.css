@@ -506,15 +506,13 @@ tr.insertion-slot td {
 
 .toast {
 	pointer-events: auto;
-	padding: 0.6rem 0.9rem;
 	background: Canvas;
 	border: 1px solid var(--border);
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 	color: CanvasText;
-	font: inherit;
 	font-size: 0.9rem;
-	cursor: pointer;
-	text-align: left;
+	display: flex;
+	align-items: stretch;
 	animation: toast-in 0.18s ease-out;
 }
 
@@ -526,6 +524,31 @@ tr.insertion-slot td {
 .toast[data-kind="error"] {
 	border-color: #d33;
 	color: #d33;
+}
+
+.toast-message {
+	flex: 1;
+	padding: 0.6rem 0.9rem;
+	background: none;
+	border: none;
+	color: inherit;
+	font: inherit;
+	font-size: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.toast-action {
+	padding: 0.6rem 0.9rem;
+	background: none;
+	border: none;
+	border-left: 1px solid currentColor;
+	color: inherit;
+	font: inherit;
+	font-size: inherit;
+	font-weight: bold;
+	cursor: pointer;
+	flex-shrink: 0;
 }
 
 @keyframes toast-in {

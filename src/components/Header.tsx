@@ -57,9 +57,9 @@ export function Header() {
 				<a href="/" style={{ textDecoration: 'none', textDecorationColor: 'none', color: 'inherit'}}>
 					<span style={{fontSize: '1.2rem'}}>☕️&nbsp;🥾&nbsp;Olivia's&nbsp;Coffee&nbsp;Trail&nbsp;&nbsp;</span>
 				</a>
-				{/* <a href="/" class={url == '/' && 'active'}>
-					Home
-				</a> */}
+				<a href="/suggest" class={url == '/' && 'active'}>
+					Got a suggestion?
+				</a>
 			</nav>
 			<div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
 				{!loading && session && (

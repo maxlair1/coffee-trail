@@ -7,6 +7,7 @@ import { Home } from './pages/Home';
 import { Cafe } from './pages/Cafe';
 import { Login } from './pages/Login';
 import { Tags } from './pages/Tags.js';
+import { Suggest } from './pages/Suggest';
 import { AuthProvider } from '../context/AuthContext.js';
 import '../styles/global.css';
 import '@phosphor-icons/web/bold';
@@ -28,6 +29,7 @@ export function App() {
 						<Route path='/cafe/new' component={() => <AuthGuard><Cafe/></AuthGuard>}></Route>
 					<Route path='/cafe/:id' component={Cafe}></Route>
 						<Route path='/tags' component={() => <AuthGuard><Tags/></AuthGuard>}></Route>
+						<Route path='/suggest' component={Suggest}></Route>
 					</Router>
 				</main>
 				<Footer />

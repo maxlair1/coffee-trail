@@ -6,6 +6,7 @@ import { type Cafe as CafeT } from '../api/cafe.types';
 import { type Tag as TagT } from '../api/tag.types';
 import { Icon } from '../components/ui/Icon';
 import { Tag } from '../components/ui/Tag';
+import { EmailSignup } from '../components/EmailSignup';
 import { compressRanks } from '../utils/rank';
 import { useHomeStore } from '../utils/homeStore';
 import { toast } from '../utils/toast';
@@ -154,18 +155,30 @@ export function Home() {
 		setSelectedTags(new Set());
 	}
 
-	async function toggleArchive(cafe: CafeT) {
-		const next = !cafe.archived;
+	async function setArchived(cafeId: number, archived: boolean): Promise<boolean> {
 		const { error } = await supabase
 			.from('ranked_cafes')
-			.update({ archived: next })
-			.eq('id', cafe.id);
+			.update({ archived })
+			.eq('id', cafeId);
 		if (error) {
 			toast.error(`Archive failed: ${error.message}`);
-			return;
+			return false;
 		}
-		setItems(prev => prev.map(c => c.id === cafe.id ? { ...c, archived: next } : c));
-		toast.success(next ? 'Archived' : 'Unarchived');
+		setItems(prev => prev.map(c => c.id === cafeId ? { ...c, archived } : c));
+		return true;
+	}
+
+	async function toggleArchive(cafe: CafeT) {
+		const next = !cafe.archived;
+		const prev = cafe.archived;
+		const ok = await setArchived(cafe.id, next);
+		if (!ok) return;
+		toast.success(next ? 'Archived' : 'Unarchived', {
+			action: {
+				label: 'Undo',
+				onClick: () => setArchived(cafe.id, prev),
+			},
+		});
 	}
 
 	async function deleteCafe(cafe: CafeT) {
@@ -457,9 +470,13 @@ export function Home() {
 
 	return (
 		<div class="home" style={{
-			maxWidth: '550px'
+			maxWidth: '600px',
+			// margin: '0 auto'
 		}}>
-			<header style={{
+			<div style={{ padding: '0 0.5rem' }}>
+				<EmailSignup />
+			</div>
+			<div style={{
 				position: 'sticky',
 				top: 0,
 				zIndex: 20,
@@ -649,7 +666,7 @@ export function Home() {
 						))}
 					</aside>
 				)}
-			</header>
+			</div>
 
 			<table class="data-table cafe-list">
 				<thead>
