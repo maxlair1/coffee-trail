@@ -484,7 +484,7 @@ export function Home() {
 				paddingBottom: '0.5rem',
 				marginBottom: '0.5rem',
 				marginTop: '1rem',
-				borderBottom: '1px solid var(--border)',
+				// borderBottom: '1px solid var(--border)',
 			}}>
 				<div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '0.5rem' }}>
 					<h1>Ranked cafes</h1>

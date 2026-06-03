@@ -57,6 +57,7 @@ export function EmailSignup({ dismissible = true }: Props = {}) {
 			padding: '1rem',
 			marginBlock: '1.5rem',
 			position: 'relative',
+			maxWidth: '600px'
 		}}>
 			{dismissible && (
 				<button
