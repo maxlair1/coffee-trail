@@ -60,9 +60,6 @@ export function Header() {
 					<Stamp height={50} width={50}/>
 					<span style={{fontSize: '1.2rem'}}>Olivia's&nbsp;Coffee&nbsp;Trail&nbsp;&nbsp;</span>
 				</a>
-				<a href="/suggest" class={url == '/' && 'active'}>
-					Got a suggestion?
-				</a>
 			</nav>
 			<div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
 				{!loading && session && (

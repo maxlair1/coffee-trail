@@ -524,109 +524,113 @@ export function Home() {
 						</>
 					)}
 
-							{!editMode && showSearch ? (
-								<>
-									<input
-										style={{
-											maxWidth: '2rem',
-										}}
-										ref={searchRef}
-										type="search"
-										placeholder="Search..."
-										value={query}
-										onInput={e => setQuery(e.currentTarget.value)}
-										class="search-input"
-										onBlur={() => {
-											if (!query || query === null)
-											setShowSearch(s => !s)
-										}}
-									/>
-								</>
-							) : (<button
-									type="button"
-									data-variant="ghost"
-									data-active={showSearch || query ? '' : undefined}
-									onClick={() => setShowSearch(s => !s)}
-									data-tooltip="Search"
-									aria-label="Search"
-									aria-pressed={showSearch}
-								>
-									<Icon name="magnifying-glass" />
-								</button>
-							)}
+					{!editMode && showSearch ? (
+						<>
+							<input
+								style={{
+									maxWidth: '2rem',
+								}}
+								ref={searchRef}
+								type="search"
+								placeholder="Search..."
+								value={query}
+								onInput={e => setQuery(e.currentTarget.value)}
+								class="search-input"
+								onBlur={() => {
+									if (!query || query === null)
+									setShowSearch(s => !s)
+								}}
+							/>
+						</>
+					) : (<button
+							type="button"
+							data-variant="ghost"
+							data-active={showSearch || query ? '' : undefined}
+							onClick={() => setShowSearch(s => !s)}
+							data-tooltip="Search"
+							aria-label="Search"
+							aria-pressed={showSearch}
+						>
+							<Icon name="magnifying-glass" />
+						</button>
+					)}
 
-							<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-								<select
-									value=""
-									onChange={e => {
-										const val = (e.currentTarget as HTMLSelectElement).value;
-										if (!val) return;
-										toggleTag(Number(val));
-										(e.currentTarget as HTMLSelectElement).value = '';
-									}}
-								>
-									<option value="">Filter by tags</option>
-									{tags
-										.filter(t => !selectedTags.has(t.id))
-										.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-								</select>
-								{[...selectedTags].map(id => {
-									const t = tags.find(t => t.id === id);
-									if (!t) return null;
-									return (
-										<Tag
-											key={t.id}
-											name={t.name}
-											color={t.color}
-											icon={t.icon}
-											onClear={() => toggleTag(t.id)}
-										/>
-									);
-								})}
-							</label>
-
-							<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
-								<input
-									type="checkbox"
-									checked={showArchived}
-									onChange={e => setShowArchived(e.currentTarget.checked)}
+					<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+						<select
+							value=""
+							onChange={e => {
+								const val = (e.currentTarget as HTMLSelectElement).value;
+								if (!val) return;
+								toggleTag(Number(val));
+								(e.currentTarget as HTMLSelectElement).value = '';
+							}}
+						>
+							<option value="">Filter by tags</option>
+							{tags
+								.filter(t => !selectedTags.has(t.id))
+								.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+						</select>
+						{[...selectedTags].map(id => {
+							const t = tags.find(t => t.id === id);
+							if (!t) return null;
+							return (
+								<Tag
+									key={t.id}
+									name={t.name}
+									color={t.color}
+									icon={t.icon}
+									onClear={() => toggleTag(t.id)}
 								/>
-								show archived
-							</label>
+							);
+						})}
+					</label>
 
-							{activeFilterCount > 0 && (
+					<label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer' }}>
+						<input
+							type="checkbox"
+							checked={showArchived}
+							onChange={e => setShowArchived(e.currentTarget.checked)}
+						/>
+						show archived
+					</label>
+
+					{activeFilterCount > 0 && (
+						<button
+							type="button"
+							data-variant="ghost"
+							onClick={clearAllFilters}
+						>
+							Clear {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
+						</button>
+					)}
+
+					{!editMode && canEdit ? (
+						<>
+							<button
+								type="button"
+								data-variant="ghost"
+								onClick={() => enterEditMode()}
+								data-tooltip="Edit rank order"
+								aria-label="Edit rank order"
+							>
+								<Icon name="pencil-simple" /> Edit
+							</button>
+							<a href="/cafe/new" data-variant="ghost">
 								<button
 									type="button"
 									data-variant="ghost"
-									onClick={clearAllFilters}
+									data-tooltip="Add a new cafe"
+									aria-label="Add a new cafe"
 								>
-									Clear {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
+									<Icon name="plus" /> Add
 								</button>
-							)}
-
-							{!editMode && canEdit && (
-								<>
-									<button
-										type="button"
-										data-variant="ghost"
-										onClick={() => enterEditMode()}
-										data-tooltip="Edit rank order"
-										aria-label="Edit rank order"
-									>
-										<Icon name="pencil-simple" /> Edit
-									</button>
-									<a href="/cafe/new" data-variant="ghost">
-										<button
-											type="button"
-											data-variant="ghost"
-											data-tooltip="Add a new cafe"
-											aria-label="Add a new cafe"
-										>
-											<Icon name="plus" /> Add
-										</button>
-									</a>
-								</>
-							)}
+							</a>
+						</>
+					):(
+						<a href="/suggest" style={{textWrap: 'no-wrap'}}>
+							<small>Got a suggestion?</small>
+						</a>
+					)} 
 				</div>
 
 				{editMode && (draggingId !== null || parkedItems.length > 0) && (
